@@ -1,0 +1,9 @@
+android
+ios
+dist-electron
+build
+Instaladores
+*.exe
+*.dmg
+*.apk
+*.zip
