@@ -70,7 +70,12 @@ export const useAudioAnalyzer = () => {
 
       if (actualSourceType === 'system') {
         if (isCapacitor) {
-           throw new Error("LIMITACIÓN ANDROID: Google prohíbe capturar audio de otras apps por seguridad. Use 'Micrófono'.");
+           console.log("Capacitor detectado para captura de sistema. Intentando via getDisplayMedia.");
+           try {
+             stream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true, audio: true });
+           } catch (e) {
+             throw new Error("ERROR DE CAPTURA ANDROID: El sistema no permitió capturar el audio. Asegúrese de otorgar permisos de 'Grabación de Pantalla/Audio' si se le solicita.");
+           }
         } else if (isElectron) {
            console.log("Electron: Iniciando captura...");
            try {

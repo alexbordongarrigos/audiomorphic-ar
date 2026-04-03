@@ -74,9 +74,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
   const isPremium = subscriptionTier === 'annual' || subscriptionTier === 'lifetime';
   const isLocked = !isPremium;
-  const isGenesisLocked = isLocked && params.autoPilotMode === 'genesis';
-  const isAutoPilotLocked = isLocked && (params.autoPilotMode === 'genesis' || params.autoPilotMode === 'harmonic');
-  const isReactivityLocked = isLocked;
+  const isGenesisLocked = false; // Unlocked for everyone
+  const isAutoPilotLocked = false; // Unlocked for everyone
+  const isReactivityLocked = false; // Unlocked for everyone
   const [autoRandomReactivitySpeed, setAutoRandomReactivitySpeed] = useState<number>(50);
   const [autoTransitionSmoothness, setAutoTransitionSmoothness] = useState<number>(50);
   const lastMetricsRef = useRef({ volume: 0, frequency: 0, bass: 0, mid: 0, treble: 0, time: 0, longTermVolume: 0 });
@@ -1038,7 +1038,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   }, [tweenParams, getAudioMetrics, audioActive, autoStyleFluidity, autoRandomReactivitySpeed, autoTransitionSmoothness, autoRandomOnEmotionChange]);
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
+    let intervalId: any;
     
     // Run interval if emotion change is disabled OR if audio is not active (fallback)
     if (params.autoRandomMode !== 'none' && (!autoRandomOnEmotionChange || !audioActive)) {
@@ -1562,7 +1562,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     };
 
     return (
-      <div className={`mb-3 transition-all duration-500 ${isParamLocked ? 'bg-indigo-900/40 border border-indigo-500/50 p-2 rounded-lg' : ''} ${isAutoActive ? 'opacity-70' : 'opacity-100'} ${isPremiumLocked ? 'opacity-60 cursor-pointer' : ''}`} onClick={isPremiumLocked ? onShowSubscription : undefined}>
+      <div className={`mb-3 transition-all duration-500 ${isParamLocked ? 'bg-indigo-900/40 border border-indigo-500/50 p-2 rounded-lg' : ''} ${isAutoActive ? 'opacity-70' : 'opacity-100'} ${isPremiumLocked ? 'opacity-80' : 'opacity-100'}`}>
         <div className="flex justify-between items-center mb-1.5 gap-2">
           <label className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 flex items-center gap-1 sm:gap-2 font-semibold truncate flex-1 cursor-pointer">
             {icon && <span className="text-cyan-300 drop-shadow-[0_0_5px_rgba(0,242,254,0.8)] shrink-0">{icon}</span>}
@@ -2165,7 +2165,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                          }
                          handleAutoRandomModeChange(val as any);
                        }}
-                       className="bg-transparent text-cyan-300 text-xs font-bold w-full p-2 outline-none appearance-none cursor-pointer"
+                       className="bg-transparent text-cyan-300 text-xs font-bold w-full p-2 outline-none appearance-auto cursor-pointer"
                      >
                        <option value="none">Apagado</option>
                        <option value="random">Aleatorio Total</option>
@@ -2420,7 +2420,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                                <select 
                                  value={params.autoTimeDelayMode}
                                  onChange={(e) => handleChange('autoTimeDelayMode', e.target.value as any)}
-                                 className="w-full bg-black/50 border border-white/10 rounded text-[10px] text-cyan-200 p-1 outline-none focus:border-purple-500"
+                                 className="w-full bg-black/50 border border-white/10 rounded text-[10px] text-cyan-200 p-1 outline-none focus:border-purple-500 appearance-auto"
                                >
                                  <option value="instant">Instantáneo</option>
                                  <option value="smart">Automático Inteligente</option>
@@ -2438,7 +2438,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                                <select 
                                  value={params.autoParamRegenMode}
                                  onChange={(e) => handleChange('autoParamRegenMode', e.target.value as any)}
-                                 className="w-full bg-black/50 border border-white/10 rounded text-[10px] text-cyan-200 p-1 outline-none focus:border-purple-500"
+                                 className="w-full bg-black/50 border border-white/10 rounded text-[10px] text-cyan-200 p-1 outline-none focus:border-purple-500 appearance-auto"
                                >
                                  <option value="instant">Instantáneo</option>
                                  <option value="smooth">Suave (Líquido)</option>
@@ -2497,19 +2497,15 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                       <div className="flex flex-col sm:flex-row bg-black/40 p-1.5 rounded-2xl mb-4 border border-white/10 shadow-inner gap-1 sm:gap-0">
                         <button
                           onClick={() => {
-                            if (isLocked) {
-                              onShowSubscription();
-                              return;
-                            }
                             handleChange('autoPilotMode', 'drift');
                           }}
                           className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs uppercase font-bold rounded-xl transition-all ${
                             params.autoPilotMode === 'drift' 
                               ? 'liquid-bubble text-cyan-300' 
                               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
-                          } ${isLocked ? 'opacity-60' : ''}`}
+                          }`}
                         >
-                          <Shuffle size={14} className="icon-neon" /> Deriva {isLocked && <Lock size={12} className="text-yellow-500" />}
+                          <Shuffle size={14} className="icon-neon" /> Deriva
                         </button>
                         <button
                           onClick={() => {
@@ -2519,9 +2515,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                             params.autoPilotMode === 'harmonic' 
                               ? 'liquid-bubble text-cyan-300' 
                               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
-                          } ${isLocked ? 'opacity-60' : ''}`}
+                          }`}
                         >
-                          <Waves size={14} className="icon-neon" /> Armónico {!isPremium && <Lock size={12} className="text-yellow-500" />}
+                          <Waves size={14} className="icon-neon" /> Armónico
                         </button>
                         <button
                           onClick={() => {
@@ -2547,7 +2543,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
                           }`}
                         >
-                          <Sprout size={14} className="icon-neon-emerald" /> Génesis {!isPremium && <Lock size={12} className="text-yellow-500" />}
+                          <Sprout size={14} className="icon-neon-emerald" /> Génesis
                         </button>
                       </div>
 
@@ -2592,7 +2588,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             <div className="liquid-section break-inside-avoid border-emerald-500/30 shadow-[inset_0_0_30px_rgba(16,185,129,0.05)]">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-bold neon-text-emerald flex items-center gap-2">
-                  <Waves className="w-5 h-5 icon-neon-emerald" /> Perturbación de Espiral
+                  <Waves className="w-5 h-5 icon-neon-emerald" /> Perturbación de Espiral {!isPremium && <span className="text-[10px] bg-emerald-500/10 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/20">MODO LECTURA</span>}
                 </h3>
                 <div className="flex items-center gap-3">
                   <button onClick={() => {
@@ -3073,7 +3069,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                       <select 
                         value={params.arFilter}
                         onChange={(e) => handleChange('arFilter', e.target.value)}
-                        className="w-full bg-black/50 border border-white/10 text-cyan-300 text-sm rounded-xl p-3 outline-none focus:border-cyan-400 shadow-inner appearance-none"
+                        className="w-full bg-black/50 border border-white/10 text-cyan-300 text-sm rounded-xl p-3 outline-none focus:border-cyan-400 shadow-inner appearance-auto"
                       >
                         <option value="none">Ninguno</option>
                         <option value="psychedelic">Psicodélico</option>
@@ -3257,7 +3253,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
               <div className="mb-4 bg-black/20 p-4 rounded-2xl border border-white/5">
                 <label className="text-xs uppercase tracking-wider text-gray-300 flex items-center gap-2 mb-3 font-semibold">
-                  Modo de Fondo {isLocked && <Lock size={12} className="text-yellow-500" />}
+                  Modo de Fondo
                 </label>
                 <select 
                   value={params.bgMode}
@@ -3268,7 +3264,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                     }
                     handleChange('bgMode', e.target.value);
                   }}
-                  className={`w-full bg-black/50 border border-white/10 text-cyan-300 text-sm rounded-xl p-3 outline-none focus:border-cyan-400 shadow-inner appearance-none ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full bg-black/50 border border-white/10 text-cyan-300 text-sm rounded-xl p-3 outline-none focus:border-cyan-400 shadow-inner appearance-auto`}
                   disabled={isLocked}
                 >
                   <option value="solid">Color Sólido</option>
