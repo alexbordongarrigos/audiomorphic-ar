@@ -147,8 +147,8 @@ const App: React.FC = () => {
     if (subscriptionTier === 'trial' && trialEndTime) {
       const checkTrial = setInterval(() => {
         if (Date.now() > (trialEndTime as number)) {
+          clearInterval(checkTrial); // Solo ejecutar UNA vez la expiración
           updateSubscription('free');
-          // Revert premium features and redirect to harmonic mode
           setParams(prev => ({
             ...prev,
             vrMode: false,
@@ -156,14 +156,12 @@ const App: React.FC = () => {
             arPortalMode: false,
             sacredGeometryEnabled: false,
             autoPilot: true,
-            autoPilotMode: 'harmonic',
+            autoPilotMode: 'harmonic', // Solo a Armónico al EXPlRAR la prueba
             lockedParams: ['vrMode', 'arMode', 'arPortalMode', 'sacredGeometryEnabled']
           }));
-          // Hide subscription menu automatically as requested
           setShowSubscription(false);
-          // Alert user or show a subtle notification if needed, but the request was "auto closures"
         }
-      }, 30000); // Check every 30 seconds for better responsiveness
+      }, 5000); // Check faster but only once it expires it resets
       return () => clearInterval(checkTrial);
     }
   }, [subscriptionTier, trialEndTime, updateSubscription]);
@@ -269,8 +267,13 @@ const App: React.FC = () => {
 
     const updateLoop = () => {
       const currentParams = paramsRef.current;
-      if (!currentParams.autoPilot) return; // Seguridad extra: detener bucle si se apagó
-      
+      if (!currentParams.autoPilot) return; 
+
+      // Factor de escala dinámico para móviles (Normalización de proporciones)
+      const minDim = Math.min(window.innerWidth, window.innerHeight);
+      const isMobile = minDim < 640;
+      const scaleFactor = isMobile ? (minDim / 800) : 1.0; // Normalizado contra 800px
+
       const { volume, frequency, bass, mid, treble } = getAudioMetrics(currentParams.sensitivity, currentParams.freqRange);
       const now = Date.now();
       const p = pilotRef.current;
@@ -417,8 +420,8 @@ const App: React.FC = () => {
         };
 
         pulseZoom += (volume * 0.0002);
-        pulseDistanceZoom += (volume * 0.05);
-        pulseSpiralThickness += (bass * 0.05);
+        pulseDistanceZoom += (volume * 0.05 * scaleFactor);
+        pulseSpiralThickness += (bass * 0.04 * scaleFactor); // Reducido para evitar el "grosor excesivo"
         pulseK += (bass * 0.005);
         pulseZ0_r += (Math.random() > 0.5 ? 1 : -1) * (mid * 0.01);
         pulseZ0_i += (Math.random() > 0.5 ? 1 : -1) * (treble * 0.01);
@@ -456,8 +459,8 @@ const App: React.FC = () => {
          };
 
          pulseZoom += (volume * 0.0002);
-         pulseDistanceZoom += (volume * 0.05);
-         pulseSpiralThickness += (bass * 0.05);
+         pulseDistanceZoom += (volume * 0.05 * scaleFactor);
+         pulseSpiralThickness += (bass * 0.04 * scaleFactor);
          pulseK += (bass * 0.005);
          pulseZ0_r += (Math.random() > 0.5 ? 1 : -1) * (mid * 0.01);
          pulseZ0_i += (Math.random() > 0.5 ? 1 : -1) * (treble * 0.01);

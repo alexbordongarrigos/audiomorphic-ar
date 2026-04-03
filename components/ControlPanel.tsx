@@ -72,11 +72,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   const [autoBeatSensitivity, setAutoBeatSensitivity] = useState<number>(50);
   const [autoStyleFluidity, setAutoStyleFluidity] = useState<number>(50);
 
-  const isPremium = subscriptionTier === 'annual' || subscriptionTier === 'lifetime';
-  const isLocked = !isPremium;
-  const isGenesisLocked = false; // Unlocked for everyone
-  const isAutoPilotLocked = false; // Unlocked for everyone
-  const isReactivityLocked = false; // Unlocked for everyone
+  const isPremium = subscriptionTier === 'annual' || subscriptionTier === 'lifetime' || subscriptionTier === 'trial';
+  const isLocked = subscriptionTier === 'free';
+  const isGenesisLocked = false; 
+  const isAutoPilotLocked = false; 
+  const isReactivityLocked = false; 
   const [autoRandomReactivitySpeed, setAutoRandomReactivitySpeed] = useState<number>(50);
   const [autoTransitionSmoothness, setAutoTransitionSmoothness] = useState<number>(50);
   const lastMetricsRef = useRef({ volume: 0, frequency: 0, bass: 0, mid: 0, treble: 0, time: 0, longTermVolume: 0 });
@@ -2165,7 +2165,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                          }
                          handleAutoRandomModeChange(val as any);
                        }}
-                       className="bg-transparent text-cyan-300 text-xs font-bold w-full p-2 outline-none appearance-auto cursor-pointer"
+                       className="liquid-select-native"
                      >
                        <option value="none">Apagado</option>
                        <option value="random">Aleatorio Total</option>
@@ -2420,7 +2420,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                                <select 
                                  value={params.autoTimeDelayMode}
                                  onChange={(e) => handleChange('autoTimeDelayMode', e.target.value as any)}
-                                 className="w-full bg-black/50 border border-white/10 rounded text-[10px] text-cyan-200 p-1 outline-none focus:border-purple-500 appearance-auto"
+                                 className="liquid-select-native"
                                >
                                  <option value="instant">Instantáneo</option>
                                  <option value="smart">Automático Inteligente</option>
@@ -2438,7 +2438,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                                <select 
                                  value={params.autoParamRegenMode}
                                  onChange={(e) => handleChange('autoParamRegenMode', e.target.value as any)}
-                                 className="w-full bg-black/50 border border-white/10 rounded text-[10px] text-cyan-200 p-1 outline-none focus:border-purple-500 appearance-auto"
+                                 className="liquid-select-native"
                                >
                                  <option value="instant">Instantáneo</option>
                                  <option value="smooth">Suave (Líquido)</option>
@@ -3073,7 +3073,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                       <select 
                         value={params.arFilter}
                         onChange={(e) => handleChange('arFilter', e.target.value)}
-                        className="w-full bg-black/50 border border-white/10 text-cyan-300 text-sm rounded-xl p-3 outline-none focus:border-cyan-400 shadow-inner appearance-auto"
+                        className="liquid-select-native"
                       >
                         <option value="none">Ninguno</option>
                         <option value="psychedelic">Psicodélico</option>
@@ -3268,7 +3268,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                     }
                     handleChange('bgMode', e.target.value);
                   }}
-                  className={`w-full bg-black/50 border border-white/10 text-cyan-300 text-sm rounded-xl p-3 outline-none focus:border-cyan-400 shadow-inner appearance-auto`}
+                  className="liquid-select-native"
                   disabled={isLocked}
                 >
                   <option value="solid">Color Sólido</option>
