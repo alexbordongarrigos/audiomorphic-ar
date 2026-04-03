@@ -133,8 +133,10 @@ const App: React.FC = () => {
   const [showAbout, setShowAbout] = useState(false);
   const paramsRef = useRef<VisualizerParams>(params);
 
-  const subscriptionTier = userData?.subscriptionTier || 'free';
+  // Immediately treat expired trials as 'free' so locks show on first render
+  const rawTier = userData?.subscriptionTier || 'free';
   const trialEndTime = userData?.trialEndTime || null;
+  const subscriptionTier: SubscriptionTier = (rawTier === 'trial' && trialEndTime && Date.now() > trialEndTime) ? 'free' : rawTier;
 
   // Sync params to localStorage whenever they change
   useEffect(() => {

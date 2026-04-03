@@ -2497,6 +2497,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                       
                       {/* Mode Selector */}
                       <div className="flex flex-col sm:flex-row bg-black/40 p-1.5 rounded-2xl mb-4 border border-white/10 shadow-inner gap-1 sm:gap-0">
+                        {/* DRIFT - LOCKED for free users */}
                         <button
                           onClick={() => {
                             if (!isPremium) {
@@ -2513,6 +2514,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                         >
                           <Shuffle size={14} className="icon-neon" /> Deriva {!isPremium && <Lock size={12} className="text-amber-400 ml-1" />}
                         </button>
+                        {/* HARMONIC - UNLOCKED for ALL users */}
                         <button
                           onClick={() => {
                             handleChange('autoPilotMode', 'harmonic');
@@ -2521,10 +2523,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                             params.autoPilotMode === 'harmonic' 
                               ? 'liquid-bubble text-cyan-300' 
                               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
-                          } ${!isPremium ? 'opacity-70 bg-amber-900/10' : ''}`}
+                          }`}
                         >
-                          <Waves size={14} className="icon-neon" /> Armónico {!isPremium && <Lock size={12} className="text-amber-400 ml-1" />}
+                          <Waves size={14} className="icon-neon" /> Armónico
                         </button>
+                        {/* GENESIS - UNLOCKED for ALL users */}
                         <button
                           onClick={() => {
                             const ALL_SG = SACRED_GEOMETRY_OPTIONS.map(o => o.id as any);
@@ -2547,9 +2550,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                             params.autoPilotMode === 'genesis' 
                               ? 'liquid-bubble text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
                               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
-                          } ${!isPremium ? 'opacity-70 bg-amber-900/10' : ''}`}
+                          }`}
                         >
-                          <Sprout size={14} className="icon-neon-emerald" /> Génesis {!isPremium && <Lock size={12} className="text-amber-400 ml-1" />}
+                          <Sprout size={14} className="icon-neon-emerald" /> Génesis
                         </button>
                       </div>
 
