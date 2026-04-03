@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, LogOut, Cloud, Download, Upload, Star, Clock, Shield, Zap, ChevronDown, Settings, Crown, Trash2 } from 'lucide-react';
+import { User, LogOut, Cloud, Download, Upload, Star, Clock, Shield, Zap, ChevronDown, Settings, Crown, Trash2, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { SubscriptionTier } from '../types';
 import { usePresets, Preset } from '../hooks/usePresets';
@@ -95,6 +95,8 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
       e.target.value = ''; // Reset input
     }
   };
+
+  const isLocked = subscriptionTier === 'free' || subscriptionTier === 'trial';
 
   return (
     <div className="relative" ref={menuRef}>
@@ -216,12 +218,12 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
                 </button>
               </div>
 
-              {subscriptionTier === 'free' && (
+              {isLocked && (
                 <button
                   onClick={() => { setIsOpen(false); onShowSubscription(); }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-yellow-300 bg-yellow-500/5 hover:bg-yellow-500/15 border border-yellow-500/20 transition-all group"
                 >
-                  <Star size={16} className="text-yellow-400 group-hover:text-yellow-300" fill="currentColor" />
+                  <Lock size={16} className="text-yellow-400 group-hover:text-yellow-300" fill="currentColor" />
                   <span>Obtener Acceso Total</span>
                 </button>
               )}

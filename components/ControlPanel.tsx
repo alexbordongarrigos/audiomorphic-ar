@@ -72,9 +72,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   const [autoBeatSensitivity, setAutoBeatSensitivity] = useState<number>(50);
   const [autoStyleFluidity, setAutoStyleFluidity] = useState<number>(50);
 
-  const isGenesisLocked = subscriptionTier === 'free' && params.autoPilotMode === 'genesis';
-  const isAutoPilotLocked = subscriptionTier === 'free' && (params.autoPilotMode === 'genesis' || params.autoPilotMode === 'harmonic');
-  const isReactivityLocked = subscriptionTier === 'free';
+  const isPremium = subscriptionTier === 'annual' || subscriptionTier === 'lifetime';
+  const isLocked = !isPremium;
+  const isGenesisLocked = isLocked && params.autoPilotMode === 'genesis';
+  const isAutoPilotLocked = isLocked && (params.autoPilotMode === 'genesis' || params.autoPilotMode === 'harmonic');
+  const isReactivityLocked = isLocked;
   const [autoRandomReactivitySpeed, setAutoRandomReactivitySpeed] = useState<number>(50);
   const [autoTransitionSmoothness, setAutoTransitionSmoothness] = useState<number>(50);
   const lastMetricsRef = useRef({ volume: 0, frequency: 0, bass: 0, mid: 0, treble: 0, time: 0, longTermVolume: 0 });
@@ -484,7 +486,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         targetParams.saturation = Math.random() * 100;
         targetParams.brightness = Math.random() * 100;
         targetParams.hueSpeed = Math.random() * 5;
-        if (subscriptionTier !== 'free') {
+        if (!isLocked) {
           targetParams.trail = Math.random();
         }
       } else if (mode === 'sacred') {
@@ -615,7 +617,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       if (mode === 'random') {
         targetParams.sacredGeometryEnabled = Math.random() > 0.5;
         
-        if (subscriptionTier !== 'free') {
+        if (!isLocked) {
           targetParams.sgTheme = Math.random() > 0.5 ? 'light' : 'dark';
           
           if (!partial) {
@@ -783,15 +785,15 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     };
 
     const genReact = () => {
-      const apModes: AutoPilotMode[] = subscriptionTier === 'free' ? ['harmonic', 'genesis'] : ['drift', 'harmonic', 'genesis'];
+      const apModes: AutoPilotMode[] = isLocked ? ['harmonic', 'genesis'] : ['drift', 'harmonic', 'genesis'];
       if (mode === 'random') {
-        if (subscriptionTier !== 'free') {
+        if (!isLocked) {
           targetParams.sensitivity = Math.random() * 5;
           targetParams.freqRange = 0.1 + Math.random() * 0.9;
           targetParams.autoSpeed = Math.random() * 2;
           targetParams.autoViscosity = Math.random();
         }
-        targetParams.autoPilot = subscriptionTier === 'free' ? true : Math.random() > 0.5;
+        targetParams.autoPilot = isLocked ? true : Math.random() > 0.5;
         targetParams.autoPilotMode = apModes[Math.floor(Math.random() * apModes.length)];
         targetParams.rootNote = Math.floor(Math.random() * 12);
       } else if (mode === 'sacred') {
@@ -832,7 +834,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       } else {
         targetParams.sensitivity = isDJ ? 6 + Math.random() * 4 : 3 + Math.random() * 5;
         targetParams.freqRange = 0.5 + Math.random() * 1.0;
-        targetParams.autoPilot = subscriptionTier === 'free' ? true : (isDJ ? true : Math.random() > 0.1);
+        targetParams.autoPilot = isLocked ? true : (isDJ ? true : Math.random() > 0.1);
         targetParams.autoPilotMode = mode === 'smart' ? 'harmonic' : apModes[Math.floor(Math.random() * apModes.length)];
         targetParams.rootNote = Math.floor(Math.random() * 12);
         
@@ -1219,7 +1221,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   };
 
   const randomizeSection = (section: string) => {
-    if (subscriptionTier === 'free') {
+    if (isLocked) {
       onShowSubscription();
       return;
     }
@@ -1370,7 +1372,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
   const handleSaveCloudPreset = async () => {
     if (!user || !presetName.trim()) return;
-    if (subscriptionTier === 'free') {
+    if (isLocked) {
       onShowSubscription();
       return;
     }
@@ -1491,10 +1493,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   };
 
   const renderSaturationLeveler = () => (
-    <div className={`bg-black/30 p-2 rounded-lg border border-white/5 space-y-1.5 mb-3 ${subscriptionTier === 'free' ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (subscriptionTier === 'free') onShowSubscription(); }}>
+    <div className={`bg-black/30 p-2 rounded-lg border border-white/5 space-y-1.5 mb-3 ${isLocked ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (isLocked) onShowSubscription(); }}>
       <div className="flex justify-between items-center">
         <label className="text-[10px] text-gray-300 font-semibold flex items-center gap-1">
-          <Activity size={12} className="text-purple-400" /> Nivelador de Saturación {subscriptionTier === 'free' && <Lock size={10} className="text-yellow-500" />}
+          <Activity size={12} className="text-purple-400" /> Nivelador de Saturación {isLocked && <Lock size={10} className="text-yellow-500" />}
         </label>
         <div className="flex items-center gap-1">
           <span className="text-[9px] text-gray-400">Auto</span>
@@ -1502,13 +1504,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             type="checkbox" 
             checked={params.autoOptionSaturationAuto}
             onChange={(e) => {
-              if (subscriptionTier === 'free') {
+              if (isLocked) {
                 onShowSubscription();
                 return;
               }
               handleChange('autoOptionSaturationAuto', e.target.checked);
             }}
-            className={`accent-purple-500 w-3 h-3 ${subscriptionTier === 'free' ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+            className={`accent-purple-500 w-3 h-3 ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
           />
         </div>
       </div>
@@ -1528,18 +1530,18 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     step: number,
     icon?: React.ReactNode,
     isAutoControlled: boolean = false,
-    isPremium: boolean = false // Default to false
+    needsPremium: boolean = false 
   ) => {
-    const isLocked = params.lockedParams?.includes(key);
-    const isAutoActive = isAutoControlled && params.autoPilot && !isLocked;
-    const isPremiumLocked = isPremium && subscriptionTier === 'free';
+    const isParamLocked = params.lockedParams?.includes(key);
+    const isAutoActive = isAutoControlled && params.autoPilot && !isParamLocked;
+    const isPremiumLocked = needsPremium && isLocked;
 
     const handleManualChange = (val: number) => {
       if (isPremiumLocked) {
         onShowSubscription();
         return;
       }
-      if (isAutoControlled && params.autoPilot && !isLocked) {
+      if (isAutoControlled && params.autoPilot && !isParamLocked) {
         setParams(p => ({ ...p, [key]: val, lockedParams: [...(p.lockedParams || []), key] }));
       } else {
         handleChange(key, val);
@@ -1560,7 +1562,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     };
 
     return (
-      <div className={`mb-3 transition-all duration-500 ${isLocked ? 'bg-indigo-900/40 border border-indigo-500/50 p-2 rounded-lg' : ''} ${isAutoActive ? 'opacity-70' : 'opacity-100'} ${isPremiumLocked ? 'opacity-60 cursor-pointer' : ''}`} onClick={isPremiumLocked ? onShowSubscription : undefined}>
+      <div className={`mb-3 transition-all duration-500 ${isParamLocked ? 'bg-indigo-900/40 border border-indigo-500/50 p-2 rounded-lg' : ''} ${isAutoActive ? 'opacity-70' : 'opacity-100'} ${isPremiumLocked ? 'opacity-60 cursor-pointer' : ''}`} onClick={isPremiumLocked ? onShowSubscription : undefined}>
         <div className="flex justify-between items-center mb-1.5 gap-2">
           <label className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 flex items-center gap-1 sm:gap-2 font-semibold truncate flex-1 cursor-pointer">
             {icon && <span className="text-cyan-300 drop-shadow-[0_0_5px_rgba(0,242,254,0.8)] shrink-0">{icon}</span>}
@@ -1571,8 +1573,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           </label>
           <div className="flex items-center gap-2">
             {isAutoControlled && params.autoPilot && (
-              <button onClick={toggleLock} className="text-gray-400 hover:text-white transition-colors" title={isLocked ? "Desbloquear autoregeneración" : "Bloquear autoregeneración"}>
-                {isLocked ? <Lock size={14} className="text-indigo-400" /> : <Unlock size={14} className="opacity-30" />}
+              <button onClick={toggleLock} className="text-gray-400 hover:text-white transition-colors" title={isParamLocked ? "Desbloquear autoregeneración" : "Bloquear autoregeneración"}>
+                {isParamLocked ? <Lock size = {14} className="text-indigo-400" /> : <Unlock size={14} className="opacity-30" />}
               </button>
             )}
             <input
@@ -1594,7 +1596,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             step={step}
             value={params[key] as number}
             onChange={(e) => handleManualChange(parseFloat(e.target.value))}
-            className={`liquid-slider ${isLocked ? 'locked' : ''} ${isPremiumLocked ? 'pointer-events-none' : ''}`}
+            className={`liquid-slider ${isParamLocked ? 'locked' : ''} ${isPremiumLocked ? 'pointer-events-none' : ''}`}
             readOnly={isPremiumLocked}
           />
         </div>
@@ -1608,10 +1610,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     min: number, 
     max: number, 
     step: number,
-    isPremium: boolean = false
+    needsPremium: boolean = false
   ) => {
     const value = params.sgSettings[selectedSgEditMode][key];
-    const isPremiumLocked = isPremium && subscriptionTier === 'free';
+    const isPremiumLocked = needsPremium && isLocked;
     return (
       <div className={`mb-3 transition-all duration-500 ${isPremiumLocked ? 'opacity-60' : 'opacity-100'}`}>
         <div className="flex justify-between items-center mb-1.5 gap-2">
@@ -2032,7 +2034,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             <p className="text-[10px] md:text-xs text-cyan-100/70 mt-1 font-medium tracking-wide">Recurrencia Compleja Sonora</p>
           </div>
           <div className="flex flex-wrap justify-center items-center gap-2 md:gap-3 w-full md:w-auto">
-            {subscriptionTier === 'free' && (
+            {isLocked && (
               <button
                 onClick={onShowSubscription}
                 className="relative overflow-hidden group p-2 md:px-4 md:py-2.5 rounded-xl border border-yellow-400/60 bg-gradient-to-br from-yellow-500/20 via-amber-500/30 to-orange-500/20 shadow-[0_0_20px_rgba(251,191,36,0.4),inset_0_0_15px_rgba(251,191,36,0.2)] hover:shadow-[0_0_30px_rgba(251,191,36,0.6),inset_0_0_20px_rgba(251,191,36,0.4)] transition-all duration-300 backdrop-blur-md flex items-center gap-2"
@@ -2157,7 +2159,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                        value={params.autoRandomMode}
                        onChange={(e) => {
                          const val = e.target.value;
-                         if (subscriptionTier === 'free' && val !== 'none' && val !== 'random') {
+                         if (isLocked && val !== 'none' && val !== 'random') {
                            onShowSubscription();
                            return;
                          }
@@ -2167,12 +2169,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                      >
                        <option value="none">Apagado</option>
                        <option value="random">Aleatorio Total</option>
-                       <option value="smart">Inteligente Automático {subscriptionTier === 'free' ? '🔒' : ''}</option>
-                       <option value="dj">Modo DJ {subscriptionTier === 'free' ? '🔒' : ''}</option>
-                       <option value="sacred">Resonancias Sagradas {subscriptionTier === 'free' ? '🔒' : ''}</option>
-                       <option value="rhythmic">Ritmos Musicales {subscriptionTier === 'free' ? '🔒' : ''}</option>
-                       <option value="rainbow">Sinfonía Arcoíris {subscriptionTier === 'free' ? '🔒' : ''}</option>
-                       <option value="astral">Astromorphociberpsicodélico {subscriptionTier === 'free' ? '🔒' : ''}</option>
+                       <option value="smart">Inteligente Automático {isLocked ? '🔒' : ''}</option>
+                       <option value="dj">Modo DJ {isLocked ? '🔒' : ''}</option>
+                       <option value="sacred">Resonancias Sagradas {isLocked ? '🔒' : ''}</option>
+                       <option value="rhythmic">Ritmos Musicales {isLocked ? '🔒' : ''}</option>
+                       <option value="rainbow">Sinfonía Arcoíris {isLocked ? '🔒' : ''}</option>
+                       <option value="astral">Astromorphociberpsicodélico {isLocked ? '🔒' : ''}</option>
                      </select>
                    </div>
                    <button
@@ -2203,34 +2205,34 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                      {params.autoRandomMode !== 'none' ? (
                        <>
                          <div className="flex items-center justify-between">
-                           <label className="text-[10px] text-gray-300 flex items-center gap-1">Detección de Emoción/Estilo {subscriptionTier === 'free' && <Lock size={10} className="text-yellow-500" />}</label>
+                           <label className="text-[10px] text-gray-300 flex items-center gap-1">Detección de Emoción/Estilo {isLocked && <Lock size={10} className="text-yellow-500" />}</label>
                            <input
                              type="checkbox"
                              checked={autoRandomOnEmotionChange}
                              onChange={(e) => {
-                               if (subscriptionTier === 'free') {
+                               if (isLocked) {
                                  onShowSubscription();
                                  return;
                                }
                                setAutoRandomOnEmotionChange(e.target.checked);
                              }}
-                             className={`w-3 h-3 accent-cyan-500 ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                             className={`w-3 h-3 accent-cyan-500 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                            />
                          </div>
                          
                          <div className="flex items-center justify-between mt-2">
-                           <label className="text-[10px] text-gray-300 flex items-center gap-1">Detección de Ritmos {subscriptionTier === 'free' && <Lock size={10} className="text-yellow-500" />}</label>
+                           <label className="text-[10px] text-gray-300 flex items-center gap-1">Detección de Ritmos {isLocked && <Lock size={10} className="text-yellow-500" />}</label>
                            <input
                              type="checkbox"
                              checked={params.autoRandomOnBeat}
                              onChange={(e) => {
-                               if (subscriptionTier === 'free') {
+                               if (isLocked) {
                                  onShowSubscription();
                                  return;
                                }
                                handleChange('autoRandomOnBeat', e.target.checked);
                              }}
-                             className={`w-3 h-3 accent-cyan-500 ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                             className={`w-3 h-3 accent-cyan-500 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                            />
                          </div>
 
@@ -2238,7 +2240,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                            <div className="space-y-3 mt-2">
                              <div className="flex flex-col items-center">
                                <label className="text-[10px] text-gray-300 flex justify-between w-full mb-1">
-                                 <span className="flex items-center gap-1">Sensibilidad a Emoción {subscriptionTier === 'free' && <Lock size={10} className="text-yellow-500" />}</span>
+                                 <span className="flex items-center gap-1">Sensibilidad a Emoción {isLocked && <Lock size={10} className="text-yellow-500" />}</span>
                                  <span className="text-cyan-400">{autoEmotionSensitivity}%</span>
                                </label>
                                <input
@@ -2248,19 +2250,19 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                                  step="1"
                                  value={autoEmotionSensitivity}
                                  onChange={(e) => {
-                                   if (subscriptionTier === 'free') {
+                                   if (isLocked) {
                                      onShowSubscription();
                                      return;
                                    }
                                    setAutoEmotionSensitivity(Number(e.target.value));
                                  }}
-                                 className={`w-full h-1 accent-cyan-500 ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                 className={`w-full h-1 accent-cyan-500 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                                />
                              </div>
 
                              <div className="flex flex-col items-center">
                                <label className="text-[10px] text-gray-300 flex justify-between w-full mb-1">
-                                 <span className="flex items-center gap-1">Sensibilidad a Ritmos {subscriptionTier === 'free' && <Lock size={10} className="text-yellow-500" />}</span>
+                                 <span className="flex items-center gap-1">Sensibilidad a Ritmos {isLocked && <Lock size={10} className="text-yellow-500" />}</span>
                                  <span className="text-cyan-400">{autoBeatSensitivity}%</span>
                                </label>
                                <input
@@ -2270,19 +2272,19 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                                  step="1"
                                  value={autoBeatSensitivity}
                                  onChange={(e) => {
-                                   if (subscriptionTier === 'free') {
+                                   if (isLocked) {
                                      onShowSubscription();
                                      return;
                                    }
                                    setAutoBeatSensitivity(Number(e.target.value));
                                  }}
-                                 className={`w-full h-1 accent-cyan-500 ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                 className={`w-full h-1 accent-cyan-500 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                                />
                              </div>
 
                              <div className="flex flex-col items-center">
                                <label className="text-[10px] text-gray-300 flex justify-between w-full mb-1">
-                                 <span className="flex items-center gap-1">Fluidez de Estilo {subscriptionTier === 'free' && <Lock size={10} className="text-yellow-500" />}</span>
+                                 <span className="flex items-center gap-1">Fluidez de Estilo {isLocked && <Lock size={10} className="text-yellow-500" />}</span>
                                  <span className="text-cyan-400">{autoStyleFluidity}%</span>
                                </label>
                                <input
@@ -2292,19 +2294,19 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                                  step="1"
                                  value={autoStyleFluidity}
                                  onChange={(e) => {
-                                   if (subscriptionTier === 'free') {
+                                   if (isLocked) {
                                      onShowSubscription();
                                      return;
                                    }
                                    setAutoStyleFluidity(Number(e.target.value));
                                  }}
-                                 className={`w-full h-1 accent-cyan-500 ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                 className={`w-full h-1 accent-cyan-500 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                                />
                              </div>
                              
                              <div className="flex flex-col items-center">
                                <label className="text-[10px] text-gray-300 flex justify-between w-full mb-1">
-                                 <span className="flex items-center gap-1">Velocidad de Reactividad {subscriptionTier === 'free' && <Lock size={10} className="text-yellow-500" />}</span>
+                                 <span className="flex items-center gap-1">Velocidad de Reactividad {isLocked && <Lock size={10} className="text-yellow-500" />}</span>
                                  <span className="text-cyan-400">{autoRandomReactivitySpeed}%</span>
                                </label>
                                <input
@@ -2314,19 +2316,19 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                                  step="1"
                                  value={autoRandomReactivitySpeed}
                                  onChange={(e) => {
-                                   if (subscriptionTier === 'free') {
+                                   if (isLocked) {
                                      onShowSubscription();
                                      return;
                                    }
                                    setAutoRandomReactivitySpeed(Number(e.target.value));
                                  }}
-                                 className={`w-full h-1 accent-cyan-500 ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                 className={`w-full h-1 accent-cyan-500 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                                />
                              </div>
 
                              <div className="flex flex-col items-center mt-4">
                                <label className="text-[10px] text-gray-300 flex justify-between w-full mb-1">
-                                 <span className="flex items-center gap-1">Suavidad de Transición {subscriptionTier === 'free' && <Lock size={10} className="text-yellow-500" />}</span>
+                                 <span className="flex items-center gap-1">Suavidad de Transición {isLocked && <Lock size={10} className="text-yellow-500" />}</span>
                                  <span className="text-cyan-400">{autoTransitionSmoothness}%</span>
                                </label>
                                <input
@@ -2336,13 +2338,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                                  step="1"
                                  value={autoTransitionSmoothness}
                                  onChange={(e) => {
-                                   if (subscriptionTier === 'free') {
+                                   if (isLocked) {
                                      onShowSubscription();
                                      return;
                                    }
                                    setAutoTransitionSmoothness(Number(e.target.value));
                                  }}
-                                 className={`w-full h-1 accent-cyan-500 ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                 className={`w-full h-1 accent-cyan-500 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                                />
                              </div>
                            </div>
@@ -2351,7 +2353,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                          {(!autoRandomOnEmotionChange && !params.autoRandomOnBeat) && (
                            <div>
                              <label className="text-[10px] text-gray-300 flex justify-between mb-1">
-                               <span className="flex items-center gap-1">Intervalo (Velocidad de Reactividad) {subscriptionTier === 'free' && <Lock size={10} className="text-yellow-500" />}</span>
+                               <span className="flex items-center gap-1">Intervalo (Velocidad de Reactividad) {isLocked && <Lock size={10} className="text-yellow-500" />}</span>
                                <span className="text-cyan-400">{autoRandomInterval}s</span>
                              </label>
                              <input
@@ -2361,13 +2363,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                                step="1"
                                value={autoRandomInterval}
                                onChange={(e) => {
-                                 if (subscriptionTier === 'free') {
+                                 if (isLocked) {
                                    onShowSubscription();
                                    return;
                                  }
                                  setAutoRandomInterval(Number(e.target.value));
                                }}
-                               className={`w-full h-1 accent-cyan-500 ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                               className={`w-full h-1 accent-cyan-500 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                              />
                            </div>
                          )}
@@ -2375,10 +2377,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                          {/* Advanced Auto-Regeneration Settings */}
                          <div className="mt-4 pt-4 border-t border-purple-500/30">
                            <h4 className="text-xs font-bold text-purple-300 mb-3 flex items-center gap-2">
-                             <BrainCircuit className="w-3 h-3" /> Autoregeneración Avanzada {subscriptionTier === 'free' && <Lock size={12} className="text-yellow-500" />}
+                             <BrainCircuit className="w-3 h-3" /> Autoregeneración Avanzada {isLocked && <Lock size={12} className="text-yellow-500" />}
                            </h4>
                            
-                           <div className={`space-y-3 ${subscriptionTier === 'free' ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (subscriptionTier === 'free') onShowSubscription(); }}>
+                           <div className={`space-y-3 ${isLocked ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (isLocked) onShowSubscription(); }}>
                              <div className="flex items-center justify-between bg-black/30 p-2 rounded-lg border border-white/5">
                                <label className="text-[10px] text-gray-300">Desvanecimiento Fuera de Pantalla</label>
                                <button 
@@ -2495,7 +2497,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                       <div className="flex flex-col sm:flex-row bg-black/40 p-1.5 rounded-2xl mb-4 border border-white/10 shadow-inner gap-1 sm:gap-0">
                         <button
                           onClick={() => {
-                            if (subscriptionTier === 'free') {
+                            if (isLocked) {
                               onShowSubscription();
                               return;
                             }
@@ -2505,9 +2507,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                             params.autoPilotMode === 'drift' 
                               ? 'liquid-bubble text-cyan-300' 
                               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
-                          } ${subscriptionTier === 'free' ? 'opacity-60' : ''}`}
+                          } ${isLocked ? 'opacity-60' : ''}`}
                         >
-                          <Shuffle size={14} className="icon-neon" /> Deriva {subscriptionTier === 'free' && <Lock size={12} className="text-yellow-500" />}
+                          <Shuffle size={14} className="icon-neon" /> Deriva {isLocked && <Lock size={12} className="text-yellow-500" />}
                         </button>
                         <button
                           onClick={() => {
@@ -2517,9 +2519,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                             params.autoPilotMode === 'harmonic' 
                               ? 'liquid-bubble text-cyan-300' 
                               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
-                          } ${subscriptionTier === 'free' ? 'opacity-60' : ''}`}
+                          } ${isLocked ? 'opacity-60' : ''}`}
                         >
-                          <Waves size={14} className="icon-neon" /> Armónico {subscriptionTier === 'free' && <Lock size={12} className="text-yellow-500" />}
+                          <Waves size={14} className="icon-neon" /> Armónico {!isPremium && <Lock size={12} className="text-yellow-500" />}
                         </button>
                         <button
                           onClick={() => {
@@ -2545,7 +2547,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
                           }`}
                         >
-                          <Sprout size={14} className="icon-neon-emerald" /> Génesis {subscriptionTier === 'free' && <Lock size={12} className="text-yellow-500" />}
+                          <Sprout size={14} className="icon-neon-emerald" /> Génesis {!isPremium && <Lock size={12} className="text-yellow-500" />}
                         </button>
                       </div>
 
@@ -2596,7 +2598,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   <button onClick={() => {
                       randomizeSection('spiralResonance');
                     }} 
-                    className={`text-emerald-400 hover:text-emerald-300 transition-colors ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`} 
+                    className={`text-emerald-400 hover:text-emerald-300 transition-colors ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} 
                     title="Armonía Aleatoria"
                   >
                     <Shuffle size={18} className="icon-neon-emerald" />
@@ -2658,7 +2660,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-bold neon-text-emerald flex items-center gap-2">
                   <Sprout className="w-5 h-5 icon-neon-emerald" /> Geometría Sagrada
-                  {subscriptionTier === 'free' && <Lock size={14} className="text-amber-400 cursor-pointer" onClick={onShowSubscription} />}
+                  {!isPremium && <Lock size={14} className="text-amber-400 cursor-pointer" onClick={onShowSubscription} />}
                 </h3>
                 <div className="flex items-center gap-3">
                   <button onClick={() => randomizeSection('sacredGeometry')} className={`text-emerald-400 hover:text-emerald-300 transition-colors`} title="Armonía Aleatoria">
@@ -2666,14 +2668,14 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   </button>
                   <div 
                      onClick={() => {
-                       if (subscriptionTier === 'free') {
+                       if (isLocked) {
                          onShowSubscription();
                          return;
                        }
                        const isEnabling = !params.sacredGeometryEnabled;
                        handleChange('sacredGeometryEnabled', isEnabling);
                      }}
-                     className={`liquid-switch shrink-0 ${params.sacredGeometryEnabled ? 'active' : ''} ${subscriptionTier === 'free' ? 'opacity-60' : ''}`}
+                     className={`liquid-switch shrink-0 ${params.sacredGeometryEnabled ? 'active' : ''} ${isLocked ? 'opacity-60' : ''}`}
                    >
                      <div className="liquid-switch-thumb"></div>
                    </div>
@@ -3002,8 +3004,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-bold neon-text text-purple-400 flex items-center gap-2" style={{backgroundImage: 'linear-gradient(135deg, #c084fc 0%, #a855f7 100%)'}}>
                   <Glasses className="w-5 h-5 icon-neon-pink" /> Realidad Virtual
+                  {isLocked && <Lock size={16} className="text-amber-400" />}
                 </h3>
-                <button onClick={() => randomizeSection('vrAr')} className={`text-purple-400 hover:text-purple-300 transition-colors ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`} title="Armonía Aleatoria">
+                <button onClick={() => randomizeSection('vrAr')} className={`text-purple-400 hover:text-purple-300 transition-colors ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} title="Armonía Aleatoria">
                   <Shuffle size={18} className="icon-neon-pink" />
                 </button>
               </div>
@@ -3011,11 +3014,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <div className="mb-6 flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/5 gap-2">
                  <label className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 font-semibold truncate flex-1 flex items-center gap-1">
                     Modo VR 3D
-                    {subscriptionTier === 'free' && <Lock size={12} className="text-amber-400 cursor-pointer" onClick={onShowSubscription} />}
+                    {isLocked && <Lock size={12} className="text-amber-400 cursor-pointer" onClick={onShowSubscription} />}
                  </label>
                  <div 
                    onClick={() => {
-                     if (subscriptionTier === 'free') {
+                     if (isLocked) {
                        onShowSubscription();
                        return;
                      }
@@ -3035,7 +3038,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                        handleChange('vrMode', false);
                      }
                    }}
-                   className={`liquid-switch shrink-0 ${params.vrMode ? 'active-purple' : ''} ${subscriptionTier === 'free' ? 'opacity-60' : ''}`}
+                   className={`liquid-switch shrink-0 ${params.vrMode ? 'active-purple' : ''} ${isLocked ? 'opacity-60' : ''}`}
                  >
                    <div className="liquid-switch-thumb"></div>
                  </div>
@@ -3046,17 +3049,17 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   <div className="mb-6 flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/5 gap-2">
                      <label className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 font-semibold truncate flex-1 flex items-center gap-1">
                         Modo AR (Cámara)
-                         {subscriptionTier === 'free' && <Lock size={12} className="text-amber-400 cursor-pointer" onClick={onShowSubscription} />}
+                         {isLocked && <Lock size={12} className="text-amber-400 cursor-pointer" onClick={onShowSubscription} />}
                      </label>
                      <div 
                        onClick={() => {
-                         if (subscriptionTier === 'free') {
+                         if (isLocked) {
                            onShowSubscription();
                            return;
                          }
                          handleChange('arMode', !params.arMode);
                        }}
-                       className={`liquid-switch shrink-0 ${params.arMode ? 'active-emerald' : ''} ${subscriptionTier === 'free' ? 'opacity-60' : ''}`}
+                       className={`liquid-switch shrink-0 ${params.arMode ? 'active-emerald' : ''} ${isLocked ? 'opacity-60' : ''}`}
                      >
                        <div className="liquid-switch-thumb"></div>
                      </div>
@@ -3065,7 +3068,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   {params.arMode && (
                     <div className="mb-4 bg-black/20 p-4 rounded-2xl border border-white/5">
                       <label className="text-xs uppercase tracking-wider text-gray-300 flex items-center gap-2 mb-3 font-semibold">
-                        Filtro AR
+                        Filtro AR {isLocked && <Lock size={12} className="text-yellow-500" />}
                       </label>
                       <select 
                         value={params.arFilter}
@@ -3114,8 +3117,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-bold neon-text text-emerald-400 flex items-center gap-2" style={{backgroundImage: 'linear-gradient(135deg, #34d399 0%, #10b981 100%)'}}>
                   <Glasses className="w-5 h-5 icon-neon-pink" /> Portal AR
+                  {isLocked && <Lock size={16} className="text-amber-400" />}
                 </h3>
-                <button onClick={() => randomizeSection('vrAr')} className={`text-emerald-400 hover:text-emerald-300 transition-colors ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`} title="Armonía Aleatoria">
+                <button onClick={() => randomizeSection('vrAr')} className={`text-emerald-400 hover:text-emerald-300 transition-colors ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} title="Armonía Aleatoria">
                   <Shuffle size={18} className="icon-neon-emerald" />
                 </button>
               </div>
@@ -3123,17 +3127,17 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <div className="mb-6 flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/5 gap-2">
                  <label className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 font-semibold truncate flex-1 flex items-center gap-1">
                     Modo Portal Inteligente
-                    {subscriptionTier === 'free' && <Lock size={12} className="text-amber-400 cursor-pointer" onClick={onShowSubscription} />}
+                    {isLocked && <Lock size={12} className="text-amber-400 cursor-pointer" onClick={onShowSubscription} />}
                  </label>
                  <div 
                    onClick={() => {
-                     if (subscriptionTier === 'free') {
+                     if (isLocked) {
                        onShowSubscription();
                        return;
                      }
                      handleChange('arPortalMode', !params.arPortalMode);
                    }}
-                   className={`liquid-switch shrink-0 ${params.arPortalMode ? 'active-emerald' : ''} ${subscriptionTier === 'free' ? 'opacity-60' : ''}`}
+                   className={`liquid-switch shrink-0 ${params.arPortalMode ? 'active-emerald' : ''} ${isLocked ? 'opacity-60' : ''}`}
                  >
                    <div className="liquid-switch-thumb"></div>
                  </div>
@@ -3159,7 +3163,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 <div 
                    className="flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/5 gap-2 mb-4 cursor-pointer group"
                    onClick={() => {
-                     if (subscriptionTier === 'free') {
+                     if (isLocked) {
                        onShowSubscription();
                      } else {
                        handleChange('showIndicators', !params.showIndicators);
@@ -3168,9 +3172,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                  >
                     <label className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 font-semibold truncate flex-1 cursor-pointer flex items-center gap-2">
                       Mostrar Indicadores
-                      {subscriptionTier === 'free' && <Lock size={12} className="text-yellow-500 group-hover:scale-110 transition-all font-bold" />}
+                      {isLocked && <Lock size={12} className="text-yellow-500 group-hover:scale-110 transition-all font-bold" />}
                     </label>
-                    <div className={`liquid-switch shrink-0 ${params.showIndicators ? 'active' : ''} ${subscriptionTier === 'free' ? 'opacity-50' : ''}`}>
+                    <div className={`liquid-switch shrink-0 ${params.showIndicators ? 'active' : ''} ${isLocked ? 'opacity-50' : ''}`}>
                       <div className="liquid-switch-thumb"></div>
                     </div>
                  </div>
@@ -3183,7 +3187,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   <h3 className="text-lg font-bold neon-text text-yellow-400 flex items-center gap-2" style={{backgroundImage: 'linear-gradient(135deg, #fde047 0%, #eab308 100%)'}}>
                     <Zap className="w-5 h-5 icon-neon" /> Reactividad
                   </h3>
-                  <button onClick={() => randomizeSection('reactivity')} className={`text-yellow-400 hover:text-yellow-300 transition-colors ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`} title="Armonía Aleatoria">
+                  <button onClick={() => randomizeSection('reactivity')} className={`text-yellow-400 hover:text-yellow-300 transition-colors ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} title="Armonía Aleatoria">
                     <Shuffle size={18} className="icon-neon" />
                   </button>
                 </div>
@@ -3198,23 +3202,24 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-bold neon-text-pink flex items-center gap-2">
                   <Palette className="w-5 h-5 icon-neon-pink" /> Cromatismo
+                  {isLocked && <Lock size={16} className="text-amber-400" />}
                 </h3>
-                <button onClick={() => randomizeSection('color')} className={`text-pink-400 hover:text-pink-300 transition-colors ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`} title="Armonía Aleatoria">
+                <button onClick={() => randomizeSection('color')} className={`text-pink-400 hover:text-pink-300 transition-colors ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} title="Armonía Aleatoria">
                   <Shuffle size={18} className="icon-neon-pink" />
                 </button>
               </div>
               
-              <div className={`mb-4 flex justify-between items-center bg-pink-900/20 p-3 rounded-2xl border border-pink-500/30 gap-2 ${subscriptionTier === 'free' ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (subscriptionTier === 'free') onShowSubscription(); }}>
+              <div className={`mb-4 flex justify-between items-center bg-pink-900/20 p-3 rounded-2xl border border-pink-500/30 gap-2 ${isLocked ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (isLocked) onShowSubscription(); }}>
                  <label className="text-[10px] sm:text-xs uppercase tracking-wider text-pink-300 font-bold flex items-center gap-2 drop-shadow-[0_0_5px_rgba(236,72,153,0.5)] truncate flex-1">
-                    <Music className="w-4 h-4 shrink-0 icon-neon-pink" /> <span className="truncate">Color Armónico</span> {subscriptionTier === 'free' && <Lock size={12} className="text-yellow-500" />}
+                    <Music className="w-4 h-4 shrink-0 icon-neon-pink" /> <span className="truncate">Color Armónico</span> {isLocked && <Lock size={12} className="text-yellow-500" />}
                  </label>
                  <div onClick={() => {
-                   if (subscriptionTier === 'free') {
+                   if (isLocked) {
                      onShowSubscription();
                      return;
                    }
                    handleChange('harmonicColor', !params.harmonicColor);
-                 }} className={`liquid-switch shrink-0 ${params.harmonicColor ? 'active-pink' : ''} ${subscriptionTier === 'free' ? 'opacity-60' : ''}`}>
+                 }} className={`liquid-switch shrink-0 ${params.harmonicColor ? 'active-pink' : ''} ${isLocked ? 'opacity-60' : ''}`}>
                    <div className="liquid-switch-thumb"></div>
                  </div>
               </div>
@@ -3243,27 +3248,28 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-bold neon-text flex items-center gap-2">
                   <Palette className="w-5 h-5 icon-neon" /> Fondo
+                  {isLocked && <Lock size={16} className="text-amber-400" />}
                 </h3>
-                <button onClick={() => randomizeSection('background')} className={`text-cyan-400 hover:text-cyan-300 transition-colors ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`} title="Armonía Aleatoria">
+                <button onClick={() => randomizeSection('background')} className={`text-cyan-400 hover:text-cyan-300 transition-colors ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} title="Armonía Aleatoria">
                   <Shuffle size={18} className="icon-neon" />
                 </button>
               </div>
 
               <div className="mb-4 bg-black/20 p-4 rounded-2xl border border-white/5">
                 <label className="text-xs uppercase tracking-wider text-gray-300 flex items-center gap-2 mb-3 font-semibold">
-                  Modo de Fondo {subscriptionTier === 'free' && <Lock size={12} className="text-yellow-500" />}
+                  Modo de Fondo {isLocked && <Lock size={12} className="text-yellow-500" />}
                 </label>
                 <select 
                   value={params.bgMode}
                   onChange={(e) => {
-                    if (subscriptionTier === 'free') {
+                    if (isLocked) {
                       onShowSubscription();
                       return;
                     }
                     handleChange('bgMode', e.target.value);
                   }}
-                  className={`w-full bg-black/50 border border-white/10 text-cyan-300 text-sm rounded-xl p-3 outline-none focus:border-cyan-400 shadow-inner appearance-none ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={subscriptionTier === 'free'}
+                  className={`w-full bg-black/50 border border-white/10 text-cyan-300 text-sm rounded-xl p-3 outline-none focus:border-cyan-400 shadow-inner appearance-none ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={isLocked}
                 >
                   <option value="solid">Color Sólido</option>
                   <option value="gradient">Degradado</option>
@@ -3274,14 +3280,14 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 </select>
               </div>
 
-              <div className={`mb-4 bg-black/20 p-4 rounded-2xl border border-white/5 ${subscriptionTier === 'free' ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (subscriptionTier === 'free') onShowSubscription(); }}>
+              <div className={`mb-4 bg-black/20 p-4 rounded-2xl border border-white/5 ${isLocked ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (isLocked) onShowSubscription(); }}>
                 <div className="flex justify-between items-center mb-3">
                   <label className="text-xs uppercase tracking-wider text-gray-300 font-semibold flex items-center gap-2">
-                    Colores Personalizables {subscriptionTier === 'free' && <Lock size={12} className="text-yellow-500" />}
+                    Colores Personalizables {isLocked && <Lock size={12} className="text-yellow-500" />}
                   </label>
                   <button 
                     onClick={() => {
-                      if (subscriptionTier === 'free') {
+                      if (isLocked) {
                         onShowSubscription();
                         return;
                       }
@@ -3321,32 +3327,32 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 </div>
               </div>
 
-              <div className={`flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/5 gap-2 mb-4 ${subscriptionTier === 'free' ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (subscriptionTier === 'free') onShowSubscription(); }}>
+              <div className={`flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/5 gap-2 mb-4 ${isLocked ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (isLocked) onShowSubscription(); }}>
                  <label className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 font-semibold truncate flex-1 flex items-center gap-1">
-                   Animado {subscriptionTier === 'free' && <Lock size={12} className="text-yellow-500" />}
+                   Animado {isLocked && <Lock size={12} className="text-yellow-500" />}
                  </label>
                  <div onClick={() => {
-                   if (subscriptionTier === 'free') {
+                   if (isLocked) {
                      onShowSubscription();
                      return;
                    }
                    handleChange('bgAnimatable', !params.bgAnimatable);
-                 }} className={`liquid-switch shrink-0 ${params.bgAnimatable ? 'active' : ''} ${subscriptionTier === 'free' ? 'opacity-60' : ''}`}><div className="liquid-switch-thumb"></div></div>
+                 }} className={`liquid-switch shrink-0 ${params.bgAnimatable ? 'active' : ''} ${isLocked ? 'opacity-60' : ''}`}><div className="liquid-switch-thumb"></div></div>
               </div>
 
               {renderControl("Velocidad Animación", "bgSpeed", 0, 5, 0.1)}
 
-              <div className={`flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/5 gap-2 mb-4 mt-4 ${subscriptionTier === 'free' ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (subscriptionTier === 'free') onShowSubscription(); }}>
+              <div className={`flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/5 gap-2 mb-4 mt-4 ${isLocked ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (isLocked) onShowSubscription(); }}>
                  <label className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 font-semibold truncate flex-1 flex items-center gap-1">
-                   Viñeta {subscriptionTier === 'free' && <Lock size={12} className="text-yellow-500" />}
+                   Viñeta {isLocked && <Lock size={12} className="text-yellow-500" />}
                  </label>
                  <div onClick={() => {
-                   if (subscriptionTier === 'free') {
+                   if (isLocked) {
                      onShowSubscription();
                      return;
                    }
                    handleChange('bgVignette', !params.bgVignette);
-                 }} className={`liquid-switch shrink-0 ${params.bgVignette ? 'active' : ''} ${subscriptionTier === 'free' ? 'opacity-60' : ''}`}><div className="liquid-switch-thumb"></div></div>
+                 }} className={`liquid-switch shrink-0 ${params.bgVignette ? 'active' : ''} ${isLocked ? 'opacity-60' : ''}`}><div className="liquid-switch-thumb"></div></div>
               </div>
 
               {params.bgVignette && renderControl("Intensidad Viñeta", "bgVignetteIntensity", 0, 1, 0.05)}
@@ -3358,7 +3364,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 <h3 className="text-lg font-bold neon-text text-purple-400 flex items-center gap-2" style={{backgroundImage: 'linear-gradient(135deg, #c084fc 0%, #a855f7 100%)'}}>
                   <Maximize className="w-5 h-5 icon-neon" /> Geometría Base
                 </h3>
-                <button onClick={() => randomizeSection('baseGeometry')} className={`text-purple-400 hover:text-purple-300 transition-colors ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`} title="Armonía Aleatoria">
+                <button onClick={() => randomizeSection('baseGeometry')} className={`text-purple-400 hover:text-purple-300 transition-colors ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} title="Armonía Aleatoria">
                   <Shuffle size={18} className="icon-neon" />
                 </button>
               </div>
@@ -3376,21 +3382,21 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   <RotateCw className="w-5 h-5 icon-neon" /> Transformación
                 </h3>
                 <div className="flex gap-2">
-                  <button onClick={() => randomizeSection('transformation')} className={`text-green-400 hover:text-green-300 transition-colors ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`} title="Armonía Aleatoria">
+                  <button onClick={() => randomizeSection('transformation')} className={`text-green-400 hover:text-green-300 transition-colors ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} title="Armonía Aleatoria">
                     <Shuffle size={18} className="icon-neon" />
                   </button>
                   <button 
                     onClick={() => {
-                      if (subscriptionTier === 'free') {
+                      if (isLocked) {
                         onShowSubscription();
                         return;
                       }
                       centerSpiral();
                     }}
-                    disabled={params.autoPilot || subscriptionTier === 'free'}
-                    className={`liquid-bubble px-3 py-2 text-xs uppercase font-bold text-cyan-300 flex items-center gap-1 ${(params.autoPilot || subscriptionTier === 'free') ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={params.autoPilot || isLocked}
+                    className={`liquid-bubble px-3 py-2 text-xs uppercase font-bold text-cyan-300 flex items-center gap-1 ${(params.autoPilot || isLocked) ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    <Target size={14} className="icon-neon" /> CENTRAR {subscriptionTier === 'free' && <Lock size={12} className="text-yellow-500" />}
+                    <Target size={14} className="icon-neon" /> CENTRAR {isLocked && <Lock size={12} className="text-yellow-500" />}
                   </button>
                 </div>
               </div>
@@ -3473,7 +3479,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-4">
                 <Cloud className="w-5 h-5 text-blue-400" />
                 Presets en la Nube
-                {subscriptionTier === 'free' && <Lock className="w-4 h-4 text-yellow-500" />}
+                {isLocked && <Lock className="w-4 h-4 text-yellow-500" />}
               </h3>
               
               <div className="flex gap-2 mb-4">
@@ -3483,13 +3489,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   onChange={(e) => setPresetName(e.target.value)}
                   placeholder="Nombre del preset..."
                   className="flex-1 bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
-                  disabled={subscriptionTier === 'free'}
+                  disabled={isLocked}
                 />
                 <button
                   onClick={handleSaveCloudPreset}
-                  disabled={!presetName.trim() || isSavingPreset || subscriptionTier === 'free'}
+                  disabled={!presetName.trim() || isSavingPreset || isLocked}
                   className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                    !presetName.trim() || isSavingPreset || subscriptionTier === 'free'
+                    !presetName.trim() || isSavingPreset || isLocked
                       ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
                       : 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_10px_rgba(37,99,235,0.5)]'
                   }`}
@@ -3498,7 +3504,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 </button>
               </div>
 
-              {subscriptionTier === 'free' ? (
+              {isLocked ? (
                 <div className="text-center p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                   <p className="text-sm text-yellow-200 mb-2">Desbloquea el guardado en la nube con Premium</p>
                   <button onClick={() => { setShowPresetModal(false); onShowSubscription(); }} className="text-xs font-bold text-yellow-400 hover:text-yellow-300 underline">
