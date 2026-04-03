@@ -63,54 +63,68 @@ export const useAudioAnalyzer = () => {
       if (sourceType === 'system') {
         if (isCapacitor) {
            throw new Error("LIMITACIÓN NATIVA: Capacitor (Android/iOS) no permite capturar el audio del sistema de otras aplicaciones por seguridad.");
-        } else if (isElectron && !isMac) {
-           // WINDOWS ELECTRON
-           console.log("Windows Electron: Iniciando captura nativa desktopCapturer...");
+        } else if (isElectron) {
+           // ELECTRON (MAC & WINDOWS)
+           console.log("Electron: Iniciando captura nativa desktopCapturer...");
            try {
+             // Verificar estado de permisos en macOS
+             if (isMac) {
+               const screenStatus = await (window as any).electronAPI.getMediaAccessStatus('screen');
+               console.log("Estado de permiso de pantalla en macOS:", screenStatus);
+               if (screenStatus === 'denied') {
+                 throw new Error("PERMISO DENEGADO: macOS bloquea la grabación de pantalla. Por favor, actívelo en 'Ajustes del Sistema > Privacidad > Grabación de Pantalla' y REINICIE la aplicación.");
+               }
+             }
+
              const sources = await (window as any).electronAPI.getDesktopSources();
-             const source = sources.find((s: any) => s.id.includes('screen') || s.name.toLowerCase().includes('system')) || sources[0];
+             // Preferimos la pantalla completa o fuentes que indiquen 'system'
+             const source = sources.find((s: any) => s.id.includes('screen') || s.name.toLowerCase().includes('system') || s.name.toLowerCase().includes('pantalla')) || sources[0];
+             
              if (!source) throw new Error("No se encontraron pantallas para captura.");
              
+             // En macOS, getUserMedia con chromeMediaSource: 'desktop' a menudo requiere que la app esté firmada.
+             // Si falla el primer intento con constraints específicas, intentaremos getDisplayMedia como fallback.
              stream = await navigator.mediaDevices.getUserMedia({
-               audio: { mandatory: { chromeMediaSource: 'desktop', chromeMediaSourceId: source.id } } as any,
-               video: { mandatory: { chromeMediaSource: 'desktop', chromeMediaSourceId: source.id } } as any
+               audio: { 
+                 mandatory: { 
+                   chromeMediaSource: 'desktop', 
+                   chromeMediaSourceId: source.id 
+                 } 
+               } as any,
+               video: { 
+                 mandatory: { 
+                   chromeMediaSource: 'desktop', 
+                   chromeMediaSourceId: source.id 
+                 } 
+               } as any
              });
            } catch (electronErr: any) {
-             console.warn("Fallo desktopCapturer. Intentando getDisplayMedia...", electronErr);
-             stream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true, audio: true });
+             console.warn("Fallo captura nativa Electron. Intentando getDisplayMedia estandar...", electronErr);
+             if (electronErr.message && electronErr.message.includes('PERMISO DENEGADO')) throw electronErr;
+             
+             try {
+               stream = await (navigator.mediaDevices as any).getDisplayMedia({ 
+                 video: true, 
+                 audio: { echoCancellation: false, noiseSuppression: false } 
+               });
+             } catch (gdmErr: any) {
+                console.error("Fallo total en captura de pantalla:", gdmErr);
+                if (isMac) {
+                  throw new Error("ERROR DE PERMISOS (macOS): Verifique 'Grabación de Pantalla' en Ajustes del Sistema. Si ya los dio, DEBE REINICIAR LA APP para que surtan efecto.");
+                }
+                throw new Error("CAPTURA CANCELADA O NO SOPORTADA: Verifique permisos de 'Grabación de pantalla' en su sistema.");
+             }
            }
         } else {
-           // MAC ELECTRON, MAC WEB, WINDOWS WEB
-           console.log("Web / Mac: Iniciando captura de pantalla/pestaña...");
+           // WEB BROWSER
+           console.log("Web: Iniciando captura de pantalla/pestaña...");
            try {
              stream = await (navigator.mediaDevices as any).getDisplayMedia({
                  video: { frameRate: { max: 30 } },
                  audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
              });
-             if (stream && stream.getAudioTracks().length === 0) {
-                 stream.getTracks().forEach((t:any) => t.stop());
-                 if (isElectron && isMac) {
-                    throw new Error("LIMITACIÓN DE APPLE: macOS bloquea nativamente la captura del audio interno. Escoja 'Micrófono' en su lugar, o instale una extensión como BlackHole.");
-                 } else {
-                    throw new Error("CAPTURA BLOQUEADA: Asegúrese de marcar la casilla 'Compartir audio del sistema' en la ventana emergente.");
-                 }
-             }
            } catch (err: any) {
-             console.error("Fallo inicial en getDisplayMedia, intentando configuración mínima...", err);
-             // Solo reintentamos si no es nuestro propio error detallado
-             if (err.message && err.message.includes('LIMITACIÓN DE APPLE')) throw err;
-             
-             try {
-                stream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true, audio: true });
-                if (stream && stream.getAudioTracks().length === 0) {
-                   stream.getTracks().forEach((t:any) => t.stop());
-                   if (isElectron && isMac) throw new Error("LIMITACIÓN DE APPLE: macOS bloquea la captura de audio interno. Use opción 'Micrófono'.");
-                   throw new Error("CAPTURA BLOQUEADA: No se detectó canal de audio.");
-                }
-             } catch (retryErr: any) {
-                if (retryErr.message && retryErr.message.includes('LIMITACIÓN DE APPLE')) throw retryErr;
-                throw new Error("CAPTURA CANCELADA O NO SOPORTADA: Verifique permisos de 'Grabación de pantalla' en Ajustes de su sistema.");
-             }
+             throw new Error("CAPTURA CANCELADA: Debe permitir el acceso a la pantalla y marcar 'Compartir audio'.");
            }
         }
 

@@ -139,6 +139,17 @@ async function createWindow() {
     return false;
   });
 
+  // Handle media access status check
+  ipcMain.handle('get-media-access-status', (event, mediaType) => {
+    if (process.platform !== 'darwin') return 'granted';
+    try {
+      return systemPreferences.getMediaAccessStatus(mediaType);
+    } catch (err) {
+      console.error(`Error checking access status for ${mediaType}:`, err);
+      return 'not-determined';
+    }
+  });
+
   // Handle system audio/desktop capture
   ipcMain.handle('get-desktop-sources', async () => {
     try {
