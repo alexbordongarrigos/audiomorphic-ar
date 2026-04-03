@@ -2511,10 +2511,6 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                         </button>
                         <button
                           onClick={() => {
-                            if (subscriptionTier === 'free') {
-                              onShowSubscription();
-                              return;
-                            }
                             handleChange('autoPilotMode', 'harmonic');
                           }}
                           className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs uppercase font-bold rounded-xl transition-all ${
@@ -2527,10 +2523,6 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                         </button>
                         <button
                           onClick={() => {
-                            if (subscriptionTier === 'free') {
-                              onShowSubscription();
-                              return;
-                            }
                             const ALL_SG = SACRED_GEOMETRY_OPTIONS.map(o => o.id as any);
                             const random3SG = [...ALL_SG].sort(() => 0.5 - Math.random()).slice(0, 3);
                             const random3SR = [...ALL_SG].sort(() => 0.5 - Math.random()).slice(0, 3);
@@ -2602,10 +2594,6 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 </h3>
                 <div className="flex items-center gap-3">
                   <button onClick={() => {
-                      if (subscriptionTier === 'free') {
-                        onShowSubscription();
-                        return;
-                      }
                       randomizeSection('spiralResonance');
                     }} 
                     className={`text-emerald-400 hover:text-emerald-300 transition-colors ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`} 
@@ -2673,7 +2661,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   {subscriptionTier === 'free' && <Lock size={14} className="text-amber-400 cursor-pointer" onClick={onShowSubscription} />}
                 </h3>
                 <div className="flex items-center gap-3">
-                  <button onClick={() => randomizeSection('sacredGeometry')} className={`text-emerald-400 hover:text-emerald-300 transition-colors ${subscriptionTier === 'free' ? 'opacity-50 cursor-not-allowed' : ''}`} title="Armonía Aleatoria">
+                  <button onClick={() => randomizeSection('sacredGeometry')} className={`text-emerald-400 hover:text-emerald-300 transition-colors`} title="Armonía Aleatoria">
                     <Shuffle size={18} className="icon-neon-emerald" />
                   </button>
                   <div 

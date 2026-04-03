@@ -221,7 +221,7 @@ export const DEFAULT_PARAMS: VisualizerParams = {
   lockedParams: [],
 
   spiralResonanceModes: [],
-  sacredGeometryEnabled: false,
+  sacredGeometryEnabled: true,
   sacredGeometryModes: [],
   sgSettings: {
     goldenSpiral: { ...defaultSGSettings },
