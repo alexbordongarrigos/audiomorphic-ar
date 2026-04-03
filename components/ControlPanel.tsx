@@ -73,10 +73,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   const [autoStyleFluidity, setAutoStyleFluidity] = useState<number>(50);
 
   const isPremium = subscriptionTier === 'annual' || subscriptionTier === 'lifetime' || subscriptionTier === 'trial';
-  const isLocked = subscriptionTier === 'free';
-  const isGenesisLocked = false; 
-  const isAutoPilotLocked = false; 
-  const isReactivityLocked = false; 
+  const isLocked = !isPremium;
+  const isGenesisLocked = isLocked; 
+  const isAutoPilotLocked = isLocked; 
+  const isReactivityLocked = isLocked; 
   const [autoRandomReactivitySpeed, setAutoRandomReactivitySpeed] = useState<number>(50);
   const [autoTransitionSmoothness, setAutoTransitionSmoothness] = useState<number>(50);
   const lastMetricsRef = useRef({ volume: 0, frequency: 0, bass: 0, mid: 0, treble: 0, time: 0, longTermVolume: 0 });
@@ -1530,7 +1530,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     step: number,
     icon?: React.ReactNode,
     isAutoControlled: boolean = false,
-    needsPremium: boolean = false 
+    needsPremium: boolean = true 
   ) => {
     const isParamLocked = params.lockedParams?.includes(key);
     const isAutoActive = isAutoControlled && params.autoPilot && !isParamLocked;
@@ -1610,7 +1610,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     min: number, 
     max: number, 
     step: number,
-    needsPremium: boolean = false
+    needsPremium: boolean = true
   ) => {
     const value = params.sgSettings[selectedSgEditMode][key];
     const isPremiumLocked = needsPremium && isLocked;
@@ -2169,12 +2169,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                      >
                        <option value="none">Apagado</option>
                        <option value="random">Aleatorio Total</option>
-                       <option value="smart">Inteligente Automático {isLocked ? '🔒' : ''}</option>
-                       <option value="dj">Modo DJ {isLocked ? '🔒' : ''}</option>
-                       <option value="sacred">Resonancias Sagradas {isLocked ? '🔒' : ''}</option>
-                       <option value="rhythmic">Ritmos Musicales {isLocked ? '🔒' : ''}</option>
-                       <option value="rainbow">Sinfonía Arcoíris {isLocked ? '🔒' : ''}</option>
-                       <option value="astral">Astromorphociberpsicodélico {isLocked ? '🔒' : ''}</option>
+                       <option value="smart">Modo Inteligente {isLocked ? ' (🔒 PRO)' : ''}</option>
+                       <option value="dj">Modo DJ {isLocked ? ' (🔒 PRO)' : ''}</option>
+                       <option value="sacred">Resonancias Sagradas {isLocked ? ' (🔒 PRO)' : ''}</option>
+                       <option value="rhythmic">Ritmos Musicales {isLocked ? ' (🔒 PRO)' : ''}</option>
+                       <option value="rainbow">Sinfonía Arcoíris {isLocked ? ' (🔒 PRO)' : ''}</option>
+                       <option value="astral">Astromorphociberpsicodélico {isLocked ? ' (🔒 PRO)' : ''}</option>
                      </select>
                    </div>
                    <button
@@ -2216,7 +2216,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                                }
                                setAutoRandomOnEmotionChange(e.target.checked);
                              }}
-                             className={`w-3 h-3 accent-cyan-500 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                             className={`w-3 h-3 accent-cyan-500 ${isLocked ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                             disabled={isLocked}
                            />
                          </div>
                          
@@ -2232,7 +2233,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                                }
                                handleChange('autoRandomOnBeat', e.target.checked);
                              }}
-                             className={`w-3 h-3 accent-cyan-500 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                             className={`w-3 h-3 accent-cyan-500 ${isLocked ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                             disabled={isLocked}
                            />
                          </div>
 
@@ -2507,9 +2509,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                             params.autoPilotMode === 'drift' 
                               ? 'liquid-bubble text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.3)]' 
                               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
-                          }`}
+                          } ${!isPremium ? 'opacity-70 bg-amber-900/10' : ''}`}
                         >
-                          <Shuffle size={14} className="icon-neon" /> Deriva {!isPremium && <Lock size={12} className="text-yellow-500" />}
+                          <Shuffle size={14} className="icon-neon" /> Deriva {!isPremium && <Lock size={12} className="text-amber-400 ml-1" />}
                         </button>
                         <button
                           onClick={() => {
@@ -2519,9 +2521,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                             params.autoPilotMode === 'harmonic' 
                               ? 'liquid-bubble text-cyan-300' 
                               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
-                          }`}
+                          } ${!isPremium ? 'opacity-70 bg-amber-900/10' : ''}`}
                         >
-                          <Waves size={14} className="icon-neon" /> Armónico
+                          <Waves size={14} className="icon-neon" /> Armónico {!isPremium && <Lock size={12} className="text-amber-400 ml-1" />}
                         </button>
                         <button
                           onClick={() => {
@@ -2545,9 +2547,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                             params.autoPilotMode === 'genesis' 
                               ? 'liquid-bubble text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
                               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
-                          }`}
+                          } ${!isPremium ? 'opacity-70 bg-amber-900/10' : ''}`}
                         >
-                          <Sprout size={14} className="icon-neon-emerald" /> Génesis
+                          <Sprout size={14} className="icon-neon-emerald" /> Génesis {!isPremium && <Lock size={12} className="text-amber-400 ml-1" />}
                         </button>
                       </div>
 
