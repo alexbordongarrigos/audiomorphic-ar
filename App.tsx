@@ -10,6 +10,7 @@ import { VisualizerParams, DEFAULT_PARAMS, GeometryInfo, GeometryRegime, SacredG
 import { useAudioAnalyzer } from './hooks/useAudioAnalyzer';
 import { useAuth } from './contexts/AuthContext';
 import ProfileMenu from './components/ProfileMenu';
+import { Zap, Activity, RotateCw } from 'lucide-react';
 
 // --- TREATISE DATA: GENESIS & MUSIC ---
 const GENESIS_STAGES = [
@@ -731,8 +732,9 @@ const App: React.FC = () => {
            
            {params.autoPilot && (
              <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-500/40 bg-indigo-500/10 text-indigo-400 text-xs font-mono backdrop-blur-sm shadow-[0_0_15px_rgba(99,102,241,0.3)]">
-                <img src="/logo.png" alt="Audiomorphic" className="w-16 md:w-20 h-auto drop-shadow-[0_0_15px_rgba(32,211,238,0.5)]" />
-                <span className="animate-spin mr-1">❖</span> 
+                <Zap className="w-3.5 h-3.5 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+                <span className="font-bold tracking-wider">Audiomorphic AR</span>
+                <RotateCw size={10} className="animate-spin ml-1 text-cyan-400/50" /> 
                 {params.autoRandomMode === 'sacred' ? 'RESONANCIAS SAGRADAS' :
                  params.autoRandomMode === 'rhythmic' ? 'RITMOS MUSICALES' :
                  params.autoPilotMode === 'harmonic' ? 'ARQUITECTURA ARMÓNICA' : 

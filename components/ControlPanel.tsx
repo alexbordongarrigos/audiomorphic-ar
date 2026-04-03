@@ -67,7 +67,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   const [showPresetModal, setShowPresetModal] = useState(false);
   const [showRandomizerMenu, setShowRandomizerMenu] = useState(false);
   const [autoRandomInterval, setAutoRandomInterval] = useState<number>(10);
-  const [autoRandomOnEmotionChange, setAutoRandomOnEmotionChange] = useState<boolean>(false);
+  const [autoRandomOnEmotionChange, setAutoRandomOnEmotionChange] = useState<boolean>(true);
   const [autoEmotionSensitivity, setAutoEmotionSensitivity] = useState<number>(50);
   const [autoBeatSensitivity, setAutoBeatSensitivity] = useState<number>(50);
   const [autoStyleFluidity, setAutoStyleFluidity] = useState<number>(50);
@@ -1560,17 +1560,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     };
 
     return (
-      <div className={`mb-3 transition-all duration-500 ${isLocked ? 'bg-indigo-900/40 border border-indigo-500/50 p-2 rounded-lg' : ''} ${isAutoActive ? 'opacity-70' : 'opacity-100'} ${isPremiumLocked ? 'opacity-60' : ''}`}>
+      <div className={`mb-3 transition-all duration-500 ${isLocked ? 'bg-indigo-900/40 border border-indigo-500/50 p-2 rounded-lg' : ''} ${isAutoActive ? 'opacity-70' : 'opacity-100'} ${isPremiumLocked ? 'opacity-60 cursor-pointer' : ''}`} onClick={isPremiumLocked ? onShowSubscription : undefined}>
         <div className="flex justify-between items-center mb-1.5 gap-2">
-          <label className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 flex items-center gap-1 sm:gap-2 font-semibold truncate flex-1">
+          <label className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 flex items-center gap-1 sm:gap-2 font-semibold truncate flex-1 cursor-pointer">
             {icon && <span className="text-cyan-300 drop-shadow-[0_0_5px_rgba(0,242,254,0.8)] shrink-0">{icon}</span>}
-            <span className="truncate flex items-center gap-1">
-              AUDIOMORPHIC EXPERIENCE
-              <span className="block text-[10px] md:text-xs font-mono text-cyan-400/60 mt-0.5 tracking-[0.2em]">
-                AR PROFESSIONAL
-              </span>
+            <span className="truncate flex items-center gap-2">
               {label}
-              {isPremiumLocked && <Lock size={12} className="text-amber-400 cursor-pointer" onClick={onShowSubscription} />}
+              {isPremiumLocked && <Lock size={12} className="text-amber-400 shrink-0" />}
             </span>
           </label>
           <div className="flex items-center gap-2">
@@ -3172,10 +3168,24 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 <h3 className="text-lg font-bold neon-text text-yellow-400 mb-6 flex items-center gap-2" style={{backgroundImage: 'linear-gradient(135deg, #fde047 0%, #eab308 100%)'}}>
                   <Zap className="w-5 h-5 icon-neon" /> Interfaz
                 </h3>
-                <div className="flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/5 gap-2 mb-4">
-                   <label className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 font-semibold truncate flex-1">Mostrar Indicadores</label>
-                   <div onClick={() => handleChange('showIndicators', !params.showIndicators)} className={`liquid-switch shrink-0 ${params.showIndicators ? 'active' : ''}`}><div className="liquid-switch-thumb"></div></div>
-                </div>
+                <div 
+                   className="flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/5 gap-2 mb-4 cursor-pointer group"
+                   onClick={() => {
+                     if (subscriptionTier === 'free') {
+                       onShowSubscription();
+                     } else {
+                       handleChange('showIndicators', !params.showIndicators);
+                     }
+                   }}
+                 >
+                    <label className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 font-semibold truncate flex-1 cursor-pointer flex items-center gap-2">
+                      Mostrar Indicadores
+                      {subscriptionTier === 'free' && <Lock size={12} className="text-yellow-500 group-hover:scale-110 transition-all font-bold" />}
+                    </label>
+                    <div className={`liquid-switch shrink-0 ${params.showIndicators ? 'active' : ''} ${subscriptionTier === 'free' ? 'opacity-50' : ''}`}>
+                      <div className="liquid-switch-thumb"></div>
+                    </div>
+                 </div>
                 {renderControl("Transparencia Menú", "menuTransparency", 0.0, 1.0, 0.05)}
                 {renderControl("Cierre Automático (s)", "menuAutoCloseTime", 1, 60, 1)}
               </div>
@@ -3234,9 +3244,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               )}
               
               <div className="mt-6">
-                {renderControl("Rango Gradiente", "hueRange", 0, 360, 1)}
-                {renderControl("Saturación", "saturation", 0, 100, 1)}
-                {renderControl("Brillo Base", "brightness", 0, 100, 1)}
+                {renderControl("Rango Gradiente", "hueRange", 0, 360, 1, undefined, false, true)}
+                {renderControl("Saturación", "saturation", 0, 100, 1, undefined, false, true)}
+                {renderControl("Brillo Base", "brightness", 0, 100, 1, undefined, false, true)}
               </div>
             </div>
 
@@ -3364,10 +3374,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   <Shuffle size={18} className="icon-neon" />
                 </button>
               </div>
-              {renderControl("Factor K (Expansión)", "k", 0.8, 1.2, 0.001, undefined, params.autoPilot, true)}
-              {renderControl("Detalle (Iteraciones)", "iter", 100, 2000, 10, undefined, false, true)}
-              {renderControl("Profundidad (Zoom)", "zoom", 0.001, 3.0, 0.001, undefined, false, true)}
-              {renderControl("Distancia (Zoom)", "distanceZoom", 0.1, 5.0, 0.01, undefined, false, true)}
+              {renderControl("Factor K", "k", 0.8, 1.2, 0.001, undefined, params.autoPilot, true)}
+              {renderControl("Detalle", "iter", 100, 2000, 10, undefined, false, true)}
+              {renderControl("Profundidad", "zoom", 0.001, 3.0, 0.001, undefined, false, true)}
+              {renderControl("Distancia", "distanceZoom", 0.1, 5.0, 0.01, undefined, false, true)}
               {renderControl("Grosor de Línea Espiral", "spiralThickness", 0.1, 10, 0.1, undefined, false, true)}
             </div>
 
