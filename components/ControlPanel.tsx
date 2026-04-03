@@ -77,6 +77,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   const isGenesisLocked = isLocked; 
   const isAutoPilotLocked = isLocked; 
   const isReactivityLocked = isLocked; 
+  const isVRARLocked = isLocked;
   const [autoRandomReactivitySpeed, setAutoRandomReactivitySpeed] = useState<number>(50);
   const [autoTransitionSmoothness, setAutoTransitionSmoothness] = useState<number>(50);
   const lastMetricsRef = useRef({ volume: 0, frequency: 0, bass: 0, mid: 0, treble: 0, time: 0, longTermVolume: 0 });
@@ -3071,14 +3072,21 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   </div>
 
                   {params.arMode && (
-                    <div className="mb-4 bg-black/20 p-4 rounded-2xl border border-white/5">
+                    <div className="mb-4 bg-black/20 p-4 rounded-2xl border border-white/5 relative">
                       <label className="text-xs uppercase tracking-wider text-gray-300 flex items-center gap-2 mb-3 font-semibold">
-                        Filtro AR {isLocked && <Star size={12} className="text-yellow-500 fill-current" />}
+                        Filtro AR {isLocked && <Lock size={12} className="text-amber-400" />}
                       </label>
                       <select 
                         value={params.arFilter}
-                        onChange={(e) => handleChange('arFilter', e.target.value)}
-                        className="liquid-select-native"
+                        onChange={(e) => {
+                          if (isLocked) {
+                            onShowSubscription();
+                            return;
+                          }
+                          handleChange('arFilter', e.target.value);
+                        }}
+                        className={`liquid-select-native ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}
+                        disabled={isLocked}
                       >
                         <option value="none">Ninguno</option>
                         <option value="psychedelic">Psicodélico</option>
@@ -3089,7 +3097,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                         <option value="hypnotic">Hipnótico</option>
                       </select>
                       <div className="mt-5">
-                        {renderControl("Intensidad Filtro", "arIntensity", 0.0, 1.0, 0.05)}
+                        {renderControl("Intensidad Filtro", "arIntensity", 0.0, 1.0, 0.05, undefined, false, true)}
                       </div>
                     </div>
                   )}
@@ -3109,10 +3117,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                     </div>
                   </div>
                   
-                  {renderControl("Profundidad Z", "vrDepth", 1, 100, 1, undefined, false, true)}
-                  {renderControl("Radio del Portal", "vrRadius", 0, 20, 0.5, undefined, false, true)}
-                  {renderControl("Grosor de Línea", "vrThickness", 0.1, 10, 0.1, undefined, false, true)}
-                  {renderControl("Desplazamiento Z", "vrDistance", -20, 20, 0.5, undefined, false, true)}
+                  {renderControl("Profundidad Z", "vrDepth", 1, 100, 1, undefined, false, isVRARLocked)}
+                  {renderControl("Radio del Portal", "vrRadius", 0, 20, 0.5, undefined, false, isVRARLocked)}
+                  {renderControl("Grosor de Línea", "vrThickness", 0.1, 10, 0.1, undefined, false, isVRARLocked)}
+                  {renderControl("Desplazamiento Z", "vrDistance", -20, 20, 0.5, undefined, false, isVRARLocked)}
                 </div>
               )}
             </div>

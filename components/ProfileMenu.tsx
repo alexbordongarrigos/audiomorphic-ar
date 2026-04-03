@@ -96,7 +96,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
     }
   };
 
-  const isLocked = subscriptionTier === 'free' || subscriptionTier === 'trial';
+  const isLocked = subscriptionTier === 'free';
 
   return (
     <div className="relative" ref={menuRef}>
@@ -154,23 +154,19 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
                   <p className="text-sm font-bold text-white truncate">{displayName}</p>
                   <p className="text-[11px] text-gray-400 truncate">{user.email}</p>
                 </div>
-              </div>
-              
-              <div className="mt-3 flex items-center justify-between">
-                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                  subscriptionTier === 'lifetime' ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' :
-                  subscriptionTier === 'annual' ? 'bg-purple-500/15 text-purple-300 border border-purple-500/30' :
-                  subscriptionTier === 'trial' ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30' :
-                  'bg-white/5 text-gray-400 border border-white/10'
-                }`}>
-                  {tierInfo.icon}
-                  {tierInfo.label}
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-white truncate max-w-[120px]">{displayName}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-[10px] font-bold uppercase tracking-tighter ${tierInfo.color}`}>
+                      {trialRemaining === 'Expirada' ? 'Viajero (Expirada)' : tierInfo.label}
+                    </span>
+                    {trialRemaining && trialRemaining !== 'Expirada' && (
+                      <span className="text-[9px] text-cyan-400 font-mono bg-cyan-400/10 px-1 rounded animate-pulse">
+                        {trialRemaining}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                {trialRemaining && subscriptionTier === 'trial' && (
-                  <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
-                    ⏱ {trialRemaining}
-                  </span>
-                )}
               </div>
             </div>
 
