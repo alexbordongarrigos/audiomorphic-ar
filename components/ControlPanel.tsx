@@ -1568,7 +1568,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             {icon && <span className="text-cyan-300 drop-shadow-[0_0_5px_rgba(0,242,254,0.8)] shrink-0">{icon}</span>}
             <span className="truncate flex items-center gap-2">
               {label}
-              {isPremiumLocked && <Lock size={12} className="text-amber-400 shrink-0" />}
+              {isPremiumLocked && <Star size={12} className="text-yellow-500 shrink-0 fill-current" />}
             </span>
           </label>
           <div className="flex items-center gap-2">
@@ -1620,7 +1620,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           <label className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 flex items-center gap-1 sm:gap-2 font-semibold truncate flex-1">
             <span className="truncate flex items-center gap-1">
               {label}
-              {isPremiumLocked && <Lock size={12} className="text-amber-400 cursor-pointer" onClick={onShowSubscription} />}
+              {isPremiumLocked && <Star size={12} className="text-yellow-500 cursor-pointer fill-current" onClick={onShowSubscription} />}
             </span>
           </label>
           <input
@@ -2205,7 +2205,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                      {params.autoRandomMode !== 'none' ? (
                        <>
                          <div className="flex items-center justify-between">
-                           <label className="text-[10px] text-gray-300 flex items-center gap-1">Detección de Emoción/Estilo {isLocked && <Lock size={10} className="text-yellow-500" />}</label>
+                           <label className="text-[10px] text-gray-300 flex items-center gap-1">Detección de Emoción/Estilo {isLocked && <Star size={10} className="text-yellow-500 fill-current" />}</label>
                            <input
                              type="checkbox"
                              checked={autoRandomOnEmotionChange}
@@ -2222,7 +2222,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                          </div>
                          
                          <div className="flex items-center justify-between mt-2">
-                           <label className="text-[10px] text-gray-300 flex items-center gap-1">Detección de Ritmos {isLocked && <Lock size={10} className="text-yellow-500" />}</label>
+                           <label className="text-[10px] text-gray-300 flex items-center gap-1">Detección de Ritmos {isLocked && <Star size={10} className="text-yellow-500 fill-current" />}</label>
                            <input
                              type="checkbox"
                              checked={params.autoRandomOnBeat}
@@ -2242,7 +2242,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                            <div className="space-y-3 mt-2">
                              <div className="flex flex-col items-center">
                                <label className="text-[10px] text-gray-300 flex justify-between w-full mb-1">
-                                 <span className="flex items-center gap-1">Sensibilidad a Emoción {isLocked && <Lock size={10} className="text-yellow-500" />}</span>
+                                 <span className="flex items-center gap-1">Sensibilidad a Emoción {isLocked && <Star size={10} className="text-yellow-500 fill-current" />}</span>
                                  <span className="text-cyan-400">{autoEmotionSensitivity}%</span>
                                </label>
                                <input
@@ -2264,7 +2264,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
                              <div className="flex flex-col items-center">
                                <label className="text-[10px] text-gray-300 flex justify-between w-full mb-1">
-                                 <span className="flex items-center gap-1">Sensibilidad a Ritmos {isLocked && <Lock size={10} className="text-yellow-500" />}</span>
+                                 <span className="flex items-center gap-1">Sensibilidad a Ritmos {isLocked && <Star size={10} className="text-yellow-500 fill-current" />}</span>
                                  <span className="text-cyan-400">{autoBeatSensitivity}%</span>
                                </label>
                                <input
@@ -2286,7 +2286,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
                              <div className="flex flex-col items-center">
                                <label className="text-[10px] text-gray-300 flex justify-between w-full mb-1">
-                                 <span className="flex items-center gap-1">Fluidez de Estilo {isLocked && <Lock size={10} className="text-yellow-500" />}</span>
+                                 <span className="flex items-center gap-1">Fluidez de Estilo {isLocked && <Star size={10} className="text-yellow-500 fill-current" />}</span>
                                  <span className="text-cyan-400">{autoStyleFluidity}%</span>
                                </label>
                                <input
@@ -2308,7 +2308,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                              
                              <div className="flex flex-col items-center">
                                <label className="text-[10px] text-gray-300 flex justify-between w-full mb-1">
-                                 <span className="flex items-center gap-1">Velocidad de Reactividad {isLocked && <Lock size={10} className="text-yellow-500" />}</span>
+                                 <span className="flex items-center gap-1">Velocidad de Reactividad {isLocked && <Star size={10} className="text-yellow-500 fill-current" />}</span>
                                  <span className="text-cyan-400">{autoRandomReactivitySpeed}%</span>
                                </label>
                                <input
@@ -2330,7 +2330,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
                              <div className="flex flex-col items-center mt-4">
                                <label className="text-[10px] text-gray-300 flex justify-between w-full mb-1">
-                                 <span className="flex items-center gap-1">Suavidad de Transición {isLocked && <Lock size={10} className="text-yellow-500" />}</span>
+                                 <span className="flex items-center gap-1">Suavidad de Transición {isLocked && <Star size={10} className="text-yellow-500 fill-current" />}</span>
                                  <span className="text-cyan-400">{autoTransitionSmoothness}%</span>
                                </label>
                                <input
@@ -2355,7 +2355,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                          {(!autoRandomOnEmotionChange && !params.autoRandomOnBeat) && (
                            <div>
                              <label className="text-[10px] text-gray-300 flex justify-between mb-1">
-                               <span className="flex items-center gap-1">Intervalo (Velocidad de Reactividad) {isLocked && <Lock size={10} className="text-yellow-500" />}</span>
+                               <span className="flex items-center gap-1">Intervalo (Velocidad de Reactividad) {isLocked && <Star size={10} className="text-yellow-500 fill-current" />}</span>
                                <span className="text-cyan-400">{autoRandomInterval}s</span>
                              </label>
                              <input
@@ -2379,7 +2379,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                          {/* Advanced Auto-Regeneration Settings */}
                          <div className="mt-4 pt-4 border-t border-purple-500/30">
                            <h4 className="text-xs font-bold text-purple-300 mb-3 flex items-center gap-2">
-                             <BrainCircuit className="w-3 h-3" /> Autoregeneración Avanzada {isLocked && <Lock size={12} className="text-yellow-500" />}
+                             <BrainCircuit className="w-3 h-3" /> Autoregeneración Avanzada {isLocked && <Star size={12} className="text-yellow-500 fill-current" />}
                            </h4>
                            
                            <div className={`space-y-3 ${isLocked ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (isLocked) onShowSubscription(); }}>
@@ -2716,7 +2716,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                                   : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
                               }`}
                             >
-                              {mode.label} {isGenesisLocked && <Lock size={10} className="text-yellow-500 inline-block ml-1" />}
+                              {mode.label} {isGenesisLocked && <Star size={10} className="text-yellow-500 fill-current inline-block ml-1" />}
                             </button>
                             <button
                               onClick={(e) => {
@@ -2744,7 +2744,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
                 <div className="mb-6">
                   <label className="text-xs uppercase tracking-wider text-gray-300 flex items-center gap-2 mb-3 font-semibold">
-                    Modo de Dibujo {isGenesisLocked && <Lock size={12} className="text-yellow-500" />}
+                    Modo de Dibujo {isGenesisLocked && <Star size={12} className="text-yellow-500 fill-current" />}
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-black/40 p-1.5 rounded-2xl border border-emerald-500/20 shadow-inner">
                     <button
@@ -2792,7 +2792,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 {(params.sgDrawMode === 'nodes' || params.sgDrawMode === 'both') && (
                   <div className="mb-6 flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/5 gap-2">
                      <label className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 font-semibold truncate flex-1 flex items-center gap-2">
-                        Mostrar Nodos Emanantes {isGenesisLocked && <Lock size={12} className="text-yellow-500" />}
+                        Mostrar Nodos Emanantes {isGenesisLocked && <Star size={12} className="text-yellow-500 fill-current" />}
                      </label>
                      <div 
                        onClick={() => {
@@ -2808,7 +2808,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
                 <div className="mb-4 flex justify-between items-center bg-emerald-900/20 p-3 rounded-2xl border border-emerald-500/30 gap-2">
                    <label className="text-[10px] sm:text-xs uppercase tracking-wider text-emerald-300 font-bold drop-shadow-[0_0_5px_rgba(16,185,129,0.5)] truncate flex-1 flex items-center gap-2">
-                      Armonía Automática Total {isGenesisLocked && <Lock size={12} className="text-yellow-500" />}
+                      Armonía Automática Total {isGenesisLocked && <Star size={12} className="text-yellow-500 fill-current" />}
                    </label>
                    <div 
                      onClick={() => {
@@ -2823,7 +2823,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
                 <div className="mb-6">
                   <label className="text-xs uppercase tracking-wider text-gray-300 flex items-center gap-2 mb-3 font-semibold">
-                    Tema de Geometría {isGenesisLocked && <Lock size={12} className="text-yellow-500" />}
+                    Tema de Geometría {isGenesisLocked && <Star size={12} className="text-yellow-500 fill-current" />}
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-black/40 p-1.5 rounded-2xl border border-emerald-500/20 shadow-inner">
                     <button
@@ -2857,7 +2857,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
                 <div className="mb-4 flex justify-between items-center bg-emerald-900/20 p-3 rounded-2xl border border-emerald-500/30 gap-2">
                    <label className="text-[10px] sm:text-xs uppercase tracking-wider text-emerald-300 font-bold drop-shadow-[0_0_5px_rgba(16,185,129,0.5)] truncate flex-1 flex items-center gap-2">
-                      Resonancia Automática {isGenesisLocked && <Lock size={12} className="text-yellow-500" />}
+                      Resonancia Automática {isGenesisLocked && <Star size={12} className="text-yellow-500 fill-current" />}
                    </label>
                    <div 
                      onClick={() => {
@@ -3070,7 +3070,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   {params.arMode && (
                     <div className="mb-4 bg-black/20 p-4 rounded-2xl border border-white/5">
                       <label className="text-xs uppercase tracking-wider text-gray-300 flex items-center gap-2 mb-3 font-semibold">
-                        Filtro AR {isLocked && <Lock size={12} className="text-yellow-500" />}
+                        Filtro AR {isLocked && <Star size={12} className="text-yellow-500 fill-current" />}
                       </label>
                       <select 
                         value={params.arFilter}
@@ -3213,7 +3213,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               
               <div className={`mb-4 flex justify-between items-center bg-pink-900/20 p-3 rounded-2xl border border-pink-500/30 gap-2 ${isLocked ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (isLocked) onShowSubscription(); }}>
                  <label className="text-[10px] sm:text-xs uppercase tracking-wider text-pink-300 font-bold flex items-center gap-2 drop-shadow-[0_0_5px_rgba(236,72,153,0.5)] truncate flex-1">
-                    <Music className="w-4 h-4 shrink-0 icon-neon-pink" /> <span className="truncate">Color Armónico</span> {isLocked && <Lock size={12} className="text-yellow-500" />}
+                    <Music className="w-4 h-4 shrink-0 icon-neon-pink" /> <span className="truncate">Color Armónico</span> {isLocked && <Star size={12} className="text-yellow-500 fill-current" />}
                  </label>
                  <div onClick={() => {
                    if (isLocked) {
@@ -3285,7 +3285,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <div className={`mb-4 bg-black/20 p-4 rounded-2xl border border-white/5 ${isLocked ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (isLocked) onShowSubscription(); }}>
                 <div className="flex justify-between items-center mb-3">
                   <label className="text-xs uppercase tracking-wider text-gray-300 font-semibold flex items-center gap-2">
-                    Colores Personalizables {isLocked && <Lock size={12} className="text-yellow-500" />}
+                    Colores Personalizables {isLocked && <Star size={12} className="text-yellow-500 fill-current" />}
                   </label>
                   <button 
                     onClick={() => {
@@ -3331,7 +3331,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
               <div className={`flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/5 gap-2 mb-4 ${isLocked ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (isLocked) onShowSubscription(); }}>
                  <label className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 font-semibold truncate flex-1 flex items-center gap-1">
-                   Animado {isLocked && <Lock size={12} className="text-yellow-500" />}
+                   Animado {isLocked && <Star size={12} className="text-yellow-500 fill-current" />}
                  </label>
                  <div onClick={() => {
                    if (isLocked) {
@@ -3346,7 +3346,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
               <div className={`flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/5 gap-2 mb-4 mt-4 ${isLocked ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (isLocked) onShowSubscription(); }}>
                  <label className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 font-semibold truncate flex-1 flex items-center gap-1">
-                   Viñeta {isLocked && <Lock size={12} className="text-yellow-500" />}
+                   Viñeta {isLocked && <Star size={12} className="text-yellow-500 fill-current" />}
                  </label>
                  <div onClick={() => {
                    if (isLocked) {
@@ -3398,7 +3398,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                     disabled={params.autoPilot || isLocked}
                     className={`liquid-bubble px-3 py-2 text-xs uppercase font-bold text-cyan-300 flex items-center gap-1 ${(params.autoPilot || isLocked) ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    <Target size={14} className="icon-neon" /> CENTRAR {isLocked && <Lock size={12} className="text-yellow-500" />}
+                    <Target size={14} className="icon-neon" /> CENTRAR {isLocked && <Star size={12} className="text-yellow-500 fill-current" />}
                   </button>
                 </div>
               </div>
@@ -3481,7 +3481,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-4">
                 <Cloud className="w-5 h-5 text-blue-400" />
                 Presets en la Nube
-                {isLocked && <Lock className="w-4 h-4 text-yellow-500" />}
+                {isLocked && <Star className="w-4 h-4 text-yellow-500 fill-current" />}
               </h3>
               
               <div className="flex gap-2 mb-4">
