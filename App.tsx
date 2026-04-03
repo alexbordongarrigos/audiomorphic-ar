@@ -269,6 +269,8 @@ const App: React.FC = () => {
 
     const updateLoop = () => {
       const currentParams = paramsRef.current;
+      if (!currentParams.autoPilot) return; // Seguridad extra: detener bucle si se apagó
+      
       const { volume, frequency, bass, mid, treble } = getAudioMetrics(currentParams.sensitivity, currentParams.freqRange);
       const now = Date.now();
       const p = pilotRef.current;

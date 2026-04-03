@@ -2497,15 +2497,19 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                       <div className="flex flex-col sm:flex-row bg-black/40 p-1.5 rounded-2xl mb-4 border border-white/10 shadow-inner gap-1 sm:gap-0">
                         <button
                           onClick={() => {
+                            if (!isPremium) {
+                              onShowSubscription();
+                              return;
+                            }
                             handleChange('autoPilotMode', 'drift');
                           }}
                           className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs uppercase font-bold rounded-xl transition-all ${
                             params.autoPilotMode === 'drift' 
-                              ? 'liquid-bubble text-cyan-300' 
+                              ? 'liquid-bubble text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.3)]' 
                               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
                           }`}
                         >
-                          <Shuffle size={14} className="icon-neon" /> Deriva
+                          <Shuffle size={14} className="icon-neon" /> Deriva {!isPremium && <Lock size={12} className="text-yellow-500" />}
                         </button>
                         <button
                           onClick={() => {
