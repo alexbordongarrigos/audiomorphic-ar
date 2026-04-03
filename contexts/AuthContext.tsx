@@ -152,14 +152,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // In Electron with Local Server (127.0.0.1), popup SHOULD work if authorized in Firebase.
     // Redirect is a fallback but often fails for custom protocols.
     if (isCapacitor || isFileProtocol) {
-      console.log("Native Capacitor/File environment detected. Using signInWithRedirect...");
+      console.log("Native Capacitor/File environment detected. Attempting signInWithPopup...");
       try {
         provider.addScope('https://www.googleapis.com/auth/userinfo.email');
         provider.addScope('https://www.googleapis.com/auth/userinfo.profile');
-        await signInWithRedirect(auth, provider);
+        
+        // REGLA DE ORO CAPACITOR: Evitar Redirect ya que pierde el sessionStorage en Android.
+        // Usamos Popup. Si el WebView es moderno (Chrome Custom Tabs), funcionará.
+        const result = await signInWithPopup(auth, provider);
+        console.log("Capacitor Popup login success:", result.user.email);
+        setAuthModalOpen(false);
         return;
-      } catch (err) {
-        console.error("Native redirect failed, trying popup as fallback:", err);
+      } catch (err: any) {
+        console.warn("Capacitor Popup failed, checking for redirect fallback suitability:", err.code);
+        
+        // Si el popup es bloqueado, intentamos Redirect pero avisamos del riesgo de pérdida de estado
+        if (err.code === 'auth/popup-blocked') {
+           console.log("Popup blocked in Capacitor, falling back to redirect carefully...");
+           await signInWithRedirect(auth, provider);
+           return;
+        }
+        
+        throw err; // Re-lanzar para el bloque catch general
       }
     }
 
@@ -171,8 +185,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       console.warn("Popup login failed or blocked:", error.code, error.message);
       
-      if (error.code === 'auth/unauthorized-domain' || error.message.includes('unauthorized domain')) {
-        alert("ERROR DE CONFIGURACIÓN: Dominios no autorizados.\n\nPor favor, añada '127.0.0.1' y 'localhost' a la lista de 'Dominios Autorizados' en su Consola de Firebase -> Authentication -> Settings.");
+      const isDomainError = error.code === 'auth/unauthorized-domain' || 
+                           error.message?.toLowerCase().includes('unauthorized domain') ||
+                           error.message?.toLowerCase().includes('requested action is invalid');
+
+      if (isDomainError) {
+        alert("ERROR DE CONFIGURACIÓN FIREBASE:\n\n1. Vaya a Firebase Console -> Authentication -> Settings -> Authorized Domains.\n2. Añada '127.0.0.1', 'localhost' y 'audiomorphic.app'.\n\nSi el problema persiste, verifique que Google Identity API esté habilitada en Google Cloud Console.");
         return;
       }
 

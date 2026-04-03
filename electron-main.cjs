@@ -58,7 +58,9 @@ async function createWindow() {
     width: 1280,
     height: 720,
     fullscreen: true,
+    simpleFullscreen: true, // macOS specific: uses the standard macOS fullscreen feel
     autoHideMenuBar: true,
+    frame: false, // Ensure no window frame for true fullscreen feel
     title: "Audiomorphic AR",
     icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: {
@@ -68,6 +70,10 @@ async function createWindow() {
       webSecurity: true 
     },
   });
+
+  // Ensure fullscreen even if state is lost
+  mainWindow.setFullScreen(true);
+  mainWindow.maximize();
 
   // Apply User-Agent to the current session
   mainWindow.webContents.setUserAgent(userAgent);

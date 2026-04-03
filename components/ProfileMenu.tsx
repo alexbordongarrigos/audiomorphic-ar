@@ -130,7 +130,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-80 z-[600] animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="fixed top-20 left-4 right-4 sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-2 sm:w-80 z-[600] animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="rounded-2xl border border-white/15 bg-gray-900/95 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden">
             
             {/* User Info Header */}

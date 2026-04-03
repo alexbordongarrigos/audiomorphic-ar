@@ -56,105 +56,124 @@ export const useAudioAnalyzer = () => {
       let stream: MediaStream;
       const isElectron = (window as any).electronAPI !== undefined;
       const isCapacitor = (window as any).Capacitor?.isNative;
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       const isMac = navigator.userAgent.includes('Mac') || navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       
-      console.log("Detectando entorno de captura:", { isElectron, isCapacitor, isMac, isSecure: window.isSecureContext });
+      console.log("Detectando entorno de captura:", { isElectron, isCapacitor, isMobile, isMac, isSecure: window.isSecureContext });
+      
+      // Forzar micrófono en móviles
+      let actualSourceType = sourceType;
+      if (isMobile && !isCapacitor) {
+        console.log("Móvil detectado: Forzando captura a Micrófono (getDisplayMedia no soportado).");
+        actualSourceType = 'microphone';
+      }
 
-      if (sourceType === 'system') {
+      if (actualSourceType === 'system') {
         if (isCapacitor) {
-           throw new Error("LIMITACIÓN NATIVA: Capacitor (Android/iOS) no permite capturar el audio del sistema de otras aplicaciones por seguridad.");
+           throw new Error("LIMITACIÓN ANDROID: Google prohíbe capturar audio de otras apps por seguridad. Use 'Micrófono'.");
         } else if (isElectron) {
-           // ELECTRON (MAC & WINDOWS)
-           console.log("Electron: Iniciando captura nativa desktopCapturer...");
+           console.log("Electron: Iniciando captura...");
            try {
-             // Verificar estado de permisos en macOS
              if (isMac) {
                const screenStatus = await (window as any).electronAPI.getMediaAccessStatus('screen');
-               console.log("Estado de permiso de pantalla en macOS:", screenStatus);
                if (screenStatus === 'denied') {
-                 throw new Error("PERMISO DENEGADO: macOS bloquea la grabación de pantalla. Por favor, actívelo en 'Ajustes del Sistema > Privacidad > Grabación de Pantalla' y REINICIE la aplicación.");
+                  throw new Error("ERROR DE PERMISOS (macOS): Active 'Grabación de Pantalla' y REINICIE la app.");
                }
              }
-
              const sources = await (window as any).electronAPI.getDesktopSources();
-             // Preferimos la pantalla completa o fuentes que indiquen 'system'
-             const source = sources.find((s: any) => s.id.includes('screen') || s.name.toLowerCase().includes('system') || s.name.toLowerCase().includes('pantalla')) || sources[0];
-             
-             if (!source) throw new Error("No se encontraron pantallas para captura.");
-             
-             // En macOS, getUserMedia con chromeMediaSource: 'desktop' a menudo requiere que la app esté firmada.
-             // Si falla el primer intento con constraints específicas, intentaremos getDisplayMedia como fallback.
+             const source = sources.find((s: any) => s.id.includes('screen') || s.name.toLowerCase().includes('system')) || sources[0];
              stream = await navigator.mediaDevices.getUserMedia({
                audio: { 
                  mandatory: { 
                    chromeMediaSource: 'desktop', 
-                   chromeMediaSourceId: source.id 
+                   chromeMediaSourceId: source.id,
+                   echoCancellation: false,
+                   noiseSuppression: false,
+                   autoGainControl: false 
                  } 
                } as any,
-               video: { 
-                 mandatory: { 
-                   chromeMediaSource: 'desktop', 
-                   chromeMediaSourceId: source.id 
-                 } 
-               } as any
-             });
-           } catch (electronErr: any) {
-             console.warn("Fallo captura nativa Electron. Intentando getDisplayMedia estandar...", electronErr);
-             if (electronErr.message && electronErr.message.includes('PERMISO DENEGADO')) throw electronErr;
-             
-             try {
-               stream = await (navigator.mediaDevices as any).getDisplayMedia({ 
-                 video: true, 
-                 audio: { echoCancellation: false, noiseSuppression: false } 
-               });
-             } catch (gdmErr: any) {
-                console.error("Fallo total en captura de pantalla:", gdmErr);
-                if (isMac) {
-                  throw new Error("ERROR DE PERMISOS (macOS): Verifique 'Grabación de Pantalla' en Ajustes del Sistema. Si ya los dio, DEBE REINICIAR LA APP para que surtan efecto.");
-                }
-                throw new Error("CAPTURA CANCELADA O NO SOPORTADA: Verifique permisos de 'Grabación de pantalla' en su sistema.");
-             }
-           }
-        } else {
-           // WEB BROWSER
-           console.log("Web: Iniciando captura de pantalla/pestaña...");
-           try {
-             stream = await (navigator.mediaDevices as any).getDisplayMedia({
-                 video: { frameRate: { max: 30 } },
-                 audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+               video: { mandatory: { chromeMediaSource: 'desktop', chromeMediaSourceId: source.id } } as any
              });
            } catch (err: any) {
-             throw new Error("CAPTURA CANCELADA: Debe permitir el acceso a la pantalla y marcar 'Compartir audio'.");
+             if (err.message && err.message.includes('PERMISOS')) throw err;
+             try {
+                // Forzar solo audio de sistema (no microphone)
+                stream = await (navigator.mediaDevices as any).getDisplayMedia({ 
+                  video: true, 
+                  audio: { 
+                    echoCancellation: false, 
+                    noiseSuppression: false,
+                    autoGainControl: false,
+                    suppressLocalAudioPlayback: false 
+                  } 
+                });
+             } catch (gdmErr) { throw new Error("CAPTURA CANCELADA: Verifique permisos."); }
            }
+        } else {
+           // Versión Web (Vercel)
+           stream = await (navigator.mediaDevices as any).getDisplayMedia({ 
+             video: true, 
+             audio: { 
+               echoCancellation: false,
+               noiseSuppression: false,
+               autoGainControl: false,
+               suppressLocalAudioPlayback: false
+             } 
+           });
         }
 
         if (!stream) throw new Error("No se pudo iniciar la captura de audio.");
 
-        // Detener video de la captura de pantalla inmediatamente
+        // Detener video de la captura de pantalla inmediatamente para ahorrar recursos
         if (stream.getVideoTracks) {
            stream.getVideoTracks().forEach(track => track.stop());
         }
         
         const audioTracks = stream.getAudioTracks();
-        if (audioTracks.length === 0) {
+        
+        // VALIDACIÓN CRUCIAL: Filtrar si el navegador coló un micrófono en vez de audio de sistema
+        const systemAudioTrack = audioTracks.find(t => !t.label.toLowerCase().includes('mic') && !t.label.toLowerCase().includes('maestro'));
+        const finalTrack = systemAudioTrack || audioTracks[0];
+
+        if (!audioTracks.length) {
            stream.getTracks().forEach(t => t.stop());
-           throw new Error("ERROR DE SEÑAL: No se detectó audio del dispositivo. Recuerde activar 'Compartir audio' en los diálogos del sistema.");
+           throw new Error("ERROR DE SEÑAL: No se detectó audio del dispositivo. Recuerde marcar la casilla 'Compartir audio' (Share Audio) en el selector de pantalla del sistema.");
         }
-        console.log("Captura de dispositivo iniciada con éxito. Tracks:", audioTracks.length);
+
+        // Si detectamos que el track es un micrófono por su nombre (label) pero pedimos sistema
+        if (finalTrack && (finalTrack.label.toLowerCase().includes('mic') || finalTrack.label.toLowerCase().includes('micro'))) {
+           console.warn("Advertencia: El track detectado parece ser un micrófono:", finalTrack.label);
+           // No lanzamos error aún, pero lo logueamos para debug
+        }
+
+        console.log("Captura de dispositivo iniciada con éxito. Track usado:", finalTrack?.label || 'Desconocido');
       } else {
         console.log("Iniciando captura de micrófono...");
-        stream = await navigator.mediaDevices.getUserMedia({ 
-          audio: {
-            deviceId: deviceId || selectedDeviceId ? { exact: deviceId || selectedDeviceId } : undefined,
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-          } 
-        });
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            } 
+          });
+        } catch (micErr) {
+          console.warn("Fallo micro genérico, intentando con ID...", micErr);
+          stream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+              deviceId: deviceId || selectedDeviceId ? { exact: deviceId || selectedDeviceId } : undefined
+            } 
+          });
+        }
       }
       
       if (!stream || stream.getAudioTracks().length === 0) {
-        throw new Error("No se pudo obtener una señal de audio válida.");
+        throw new Error("No se pudo obtener una señal de audio válida. Verifique permisos.");
+      }
+
+      // Re-asegurar que el contexto esté activo (especialmente en iOS Safari)
+      if (audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume();
       }
 
       analyserRef.current = audioContextRef.current.createAnalyser();

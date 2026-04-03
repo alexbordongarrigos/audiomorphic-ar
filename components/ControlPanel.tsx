@@ -655,7 +655,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           }
         }
         
-        targetParams.sgDrawMode = Math.random() > 0.5 ? 'layers' : 'both';
+        targetParams.sgDrawMode = Math.random() > 0.7 ? 'layers' : 'both'; // Favor both in sacred mode
         targetParams.sgShowNodes = Math.random() > 0.5;
         targetParams.sgGlobalOpacity = 1.5 + Math.random() * 1.5;
         targetParams.sgGlobalFlowSpeed = (Math.random() - 0.5) * 2;
@@ -682,7 +682,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           if (prev.sgAutoResonance || targetParams.sgAutoResonance) targetParams.spiralResonanceModes = selectedModes;
         }
         
-        targetParams.sgDrawMode = (songPart === 'chorus' || metrics.treble > 0.6) ? 'both' : 'nodes';
+        // Prefer 'both' for higher energy parts of the song
+        targetParams.sgDrawMode = (songPart === 'chorus' || metrics.treble > 0.5 || metrics.volume > 0.6) ? 'both' : (Math.random() > 0.5 ? 'both' : 'nodes');
         targetParams.sgShowNodes = true;
         targetParams.sgGlobalOpacity = (songPart === 'intro/bridge' ? 0.3 : 0.5) + (metrics.volume * 0.5);
         targetParams.sgGlobalFlowSpeed = (metrics.mid * (songPart === 'chorus' ? 5 : 3)) * (Math.random() > 0.5 ? 1 : -1);
@@ -756,8 +757,14 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         targetParams.sgGlobalAudioReactivity = isDJ ? 2.0 + Math.random() * 4.0 : 0.5 + Math.random() * 2;
         targetParams.sgGlobalViscosity = Math.random();
         
-        const drawModes = ['layers', 'nodes', 'both'] as const;
-        targetParams.sgDrawMode = mode === 'smart' ? 'both' : drawModes[Math.floor(Math.random() * drawModes.length)];
+        // Favorite 'both' (60% probability) or vary according to energy
+        const rand = Math.random();
+        targetParams.sgDrawMode = (mode === 'smart' || isDJ || metrics.volume > 0.6) ? 'both' : (rand > 0.4 ? 'both' : (rand > 0.2 ? 'layers' : 'nodes'));
+        
+        if (hasAudio && !isDJ && mode !== 'smart') {
+           if (metrics.bass > 0.8) targetParams.sgDrawMode = 'nodes';
+           else if (metrics.treble > 0.8) targetParams.sgDrawMode = 'layers';
+        }
         
         targetParams.sgShowNodes = isDJ ? true : Math.random() > 0.3;
         
@@ -1558,6 +1565,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           <label className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 flex items-center gap-1 sm:gap-2 font-semibold truncate flex-1">
             {icon && <span className="text-cyan-300 drop-shadow-[0_0_5px_rgba(0,242,254,0.8)] shrink-0">{icon}</span>}
             <span className="truncate flex items-center gap-1">
+              AUDIOMORPHIC EXPERIENCE
+              <span className="block text-[10px] md:text-xs font-mono text-cyan-400/60 mt-0.5 tracking-[0.2em]">
+                AR PROFESSIONAL
+              </span>
               {label}
               {isPremiumLocked && <Lock size={12} className="text-amber-400 cursor-pointer" onClick={onShowSubscription} />}
             </span>
@@ -2503,17 +2514,27 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                           <Shuffle size={14} className="icon-neon" /> Deriva {subscriptionTier === 'free' && <Lock size={12} className="text-yellow-500" />}
                         </button>
                         <button
-                          onClick={() => handleChange('autoPilotMode', 'harmonic')}
+                          onClick={() => {
+                            if (subscriptionTier === 'free') {
+                              onShowSubscription();
+                              return;
+                            }
+                            handleChange('autoPilotMode', 'harmonic');
+                          }}
                           className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs uppercase font-bold rounded-xl transition-all ${
                             params.autoPilotMode === 'harmonic' 
                               ? 'liquid-bubble text-cyan-300' 
                               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
-                          }`}
+                          } ${subscriptionTier === 'free' ? 'opacity-60' : ''}`}
                         >
-                          <Waves size={14} className="icon-neon" /> Armónico
+                          <Waves size={14} className="icon-neon" /> Armónico {subscriptionTier === 'free' && <Lock size={12} className="text-yellow-500" />}
                         </button>
                         <button
                           onClick={() => {
+                            if (subscriptionTier === 'free') {
+                              onShowSubscription();
+                              return;
+                            }
                             const ALL_SG = SACRED_GEOMETRY_OPTIONS.map(o => o.id as any);
                             const random3SG = [...ALL_SG].sort(() => 0.5 - Math.random()).slice(0, 3);
                             const random3SR = [...ALL_SG].sort(() => 0.5 - Math.random()).slice(0, 3);
@@ -2536,7 +2557,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
                           }`}
                         >
-                          <Sprout size={14} className="icon-neon-emerald" /> Génesis
+                          <Sprout size={14} className="icon-neon-emerald" /> Génesis {subscriptionTier === 'free' && <Lock size={12} className="text-yellow-500" />}
                         </button>
                       </div>
 
@@ -2707,7 +2728,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                                   : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
                               }`}
                             >
-                              {mode.label}
+                              {mode.label} {isGenesisLocked && <Lock size={10} className="text-yellow-500 inline-block ml-1" />}
                             </button>
                             <button
                               onClick={(e) => {
@@ -3096,10 +3117,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                     </div>
                   </div>
                   
-                  {renderControl("Profundidad Z", "vrDepth", 1, 100, 1)}
-                  {renderControl("Radio del Portal", "vrRadius", 0, 20, 0.5)}
-                  {renderControl("Grosor de Línea", "vrThickness", 0.1, 10, 0.1)}
-                  {renderControl("Desplazamiento Z", "vrDistance", -20, 20, 0.5)}
+                  {renderControl("Profundidad Z", "vrDepth", 1, 100, 1, undefined, false, true)}
+                  {renderControl("Radio del Portal", "vrRadius", 0, 20, 0.5, undefined, false, true)}
+                  {renderControl("Grosor de Línea", "vrThickness", 0.1, 10, 0.1, undefined, false, true)}
+                  {renderControl("Desplazamiento Z", "vrDistance", -20, 20, 0.5, undefined, false, true)}
                 </div>
               )}
             </div>
@@ -3136,11 +3157,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
               {params.arPortalMode && (
                 <div className="animate-in fade-in slide-in-from-top-4 duration-700">
-                  {renderControl("Escala del Portal", "arPortalScale", 0.1, 20.0, 0.1)}
-                  {renderControl("Intensidad Perspectiva", "arPortalPerspectiveIntensity", 0.0, 5.0, 0.1)}
-                  {renderControl("Amplitud Punto de Fuga", "arPortalVanishingRadius", 0.0, 10.0, 0.1)}
-                  {renderControl("Difuminado de Profundidad", "arPortalFade", 0.0, 5.0, 0.01)}
-                  {renderControl("Doblado del Portal", "arPortalBending", 0.0, 1.0, 0.01)}
+                  {renderControl("Escala del Portal", "arPortalScale", 0.1, 20.0, 0.1, undefined, false, true)}
+                  {renderControl("Intensidad Perspectiva", "arPortalPerspectiveIntensity", 0.0, 5.0, 0.1, undefined, false, true)}
+                  {renderControl("Amplitud Punto de Fuga", "arPortalVanishingRadius", 0.0, 10.0, 0.1, undefined, false, true)}
+                  {renderControl("Difuminado de Profundidad", "arPortalFade", 0.0, 5.0, 0.01, undefined, false, true)}
+                  {renderControl("Doblado del Portal", "arPortalBending", 0.0, 1.0, 0.01, undefined, false, true)}
                 </div>
               )}
             </div>

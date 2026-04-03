@@ -108,15 +108,24 @@ const App: React.FC = () => {
   
   // Load initial params from localStorage if available, otherwise use DEFAULT_PARAMS
   const [params, setParams] = useState<VisualizerParams>(() => {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const saved = localStorage.getItem('audiomorphic_params');
+    let initialParams = DEFAULT_PARAMS;
+
     if (saved) {
       try {
-        return { ...DEFAULT_PARAMS, ...JSON.parse(saved) };
+        initialParams = { ...DEFAULT_PARAMS, ...JSON.parse(saved) };
       } catch (e) {
-        return DEFAULT_PARAMS;
+        initialParams = DEFAULT_PARAMS;
       }
     }
-    return DEFAULT_PARAMS;
+
+    // Si es móvil, forzar micrófono por defecto (sobre-escribe localStorage)
+    if (isMobile) {
+      initialParams.audioSource = 'microphone';
+    }
+
+    return initialParams;
   });
 
   const [showSubscription, setShowSubscription] = useState(false);
@@ -136,9 +145,9 @@ const App: React.FC = () => {
   useEffect(() => {
     if (subscriptionTier === 'trial' && trialEndTime) {
       const checkTrial = setInterval(() => {
-        if (Date.now() > trialEndTime) {
+        if (Date.now() > (trialEndTime as number)) {
           updateSubscription('free');
-          // Revert premium features
+          // Revert premium features and redirect to harmonic mode
           setParams(prev => ({
             ...prev,
             vrMode: false,
@@ -146,11 +155,14 @@ const App: React.FC = () => {
             arPortalMode: false,
             sacredGeometryEnabled: false,
             autoPilot: true,
-            autoPilotMode: prev.autoPilotMode === 'drift' ? 'genesis' : prev.autoPilotMode
+            autoPilotMode: 'harmonic',
+            lockedParams: ['vrMode', 'arMode', 'arPortalMode', 'sacredGeometryEnabled']
           }));
-          setShowSubscription(true);
+          // Hide subscription menu automatically as requested
+          setShowSubscription(false);
+          // Alert user or show a subtle notification if needed, but the request was "auto closures"
         }
-      }, 60000); // Check every minute
+      }, 30000); // Check every 30 seconds for better responsiveness
       return () => clearInterval(checkTrial);
     }
   }, [subscriptionTier, trialEndTime, updateSubscription]);
@@ -719,6 +731,7 @@ const App: React.FC = () => {
            
            {params.autoPilot && (
              <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-500/40 bg-indigo-500/10 text-indigo-400 text-xs font-mono backdrop-blur-sm shadow-[0_0_15px_rgba(99,102,241,0.3)]">
+                <img src="/logo.png" alt="Audiomorphic" className="w-16 md:w-20 h-auto drop-shadow-[0_0_15px_rgba(32,211,238,0.5)]" />
                 <span className="animate-spin mr-1">❖</span> 
                 {params.autoRandomMode === 'sacred' ? 'RESONANCIAS SAGRADAS' :
                  params.autoRandomMode === 'rhythmic' ? 'RITMOS MUSICALES' :
