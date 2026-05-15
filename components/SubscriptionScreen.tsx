@@ -16,11 +16,13 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
   const [promoError, setPromoError] = useState('');
 
   const handleTrialSubscribe = () => {
-    if (promoCode.trim().toLowerCase() === 'espiral') {
+    // Normalize string: remove any quotes, spaces, or special characters and convert to lowercase
+    const normalizedCode = promoCode.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    if (normalizedCode === 'espiral') {
       setPromoError('');
       onSubscribe('trial', 15 * 24 * 60 * 60 * 1000); // 15 days
     } else {
-      setPromoError('Código promocional inválido');
+      setPromoError('Este código no es válido.');
     }
   };
 
