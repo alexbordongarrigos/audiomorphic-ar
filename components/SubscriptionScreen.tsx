@@ -17,8 +17,9 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
   const [isActivating, setIsActivating] = useState(false);
 
   const handleTrialSubscribe = async () => {
-    // Check if the user has already used the trial
-    if (userData?.hasUsedTrial) {
+    // Check if the user has already used the trial (including legacy trials without the flag)
+    const hasLegacyTrial = userData?.subscriptionTier === 'trial';
+    if (userData?.hasUsedTrial || hasLegacyTrial) {
       setPromoError('Ya has utilizado una prueba gratuita anteriormente.');
       return;
     }
@@ -28,9 +29,13 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
     if (normalizedCode === 'espiral') {
       setPromoError('');
       setIsActivating(true);
-      await onSubscribe('trial', 15 * 24 * 60 * 60 * 1000); // 15 days
-      // Note: Modal will close if successful
-      setIsActivating(false);
+      try {
+        await onSubscribe('trial', 15 * 24 * 60 * 60 * 1000); // 15 days
+      } catch (error) {
+        setPromoError('Ha ocurrido un error al activar la prueba.');
+      } finally {
+        setIsActivating(false);
+      }
     } else {
       setPromoError('Este código no es válido.');
     }
@@ -38,8 +43,13 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
 
   const handleViajeroTrial = async () => {
     setIsActivating(true);
-    await onSubscribe('trial', 1 * 60 * 60 * 1000);
-    setIsActivating(false);
+    try {
+      await onSubscribe('trial', 1 * 60 * 60 * 1000);
+    } catch (error) {
+      console.error('Error activating trial:', error);
+    } finally {
+      setIsActivating(false);
+    }
   };
 
   // Format remaining trial time
@@ -152,9 +162,9 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
               </ul>
               <button 
                 onClick={handleViajeroTrial}
-                disabled={!user || currentTier === 'trial' || currentTier === 'annual' || currentTier === 'lifetime' || userData?.hasUsedTrial || isActivating}
+                disabled={!user || currentTier === 'trial' || currentTier === 'annual' || currentTier === 'lifetime' || userData?.hasUsedTrial || (userData?.subscriptionTier === 'trial') || isActivating}
                 className={`w-full py-3 rounded-xl font-semibold transition-colors border flex items-center justify-center gap-2 ${
-                  !user || currentTier !== 'free' || userData?.hasUsedTrial || isActivating
+                  !user || currentTier !== 'free' || userData?.hasUsedTrial || (userData?.subscriptionTier === 'trial') || isActivating
                     ? 'bg-gray-800/50 text-gray-500 border-gray-700 cursor-not-allowed'
                     : 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/50'
                 }`}
@@ -162,7 +172,7 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
                 {isActivating ? (
                   <><RotateCw size={18} className="animate-spin" /> Activando...</>
                 ) : (
-                  <><Zap size={18} /> {currentTier === 'trial' ? 'Prueba Activa' : userData?.hasUsedTrial ? 'Expirado' : 'Iniciar Prueba (1 Hora)'}</>
+                  <><Zap size={18} /> {currentTier === 'trial' ? 'Prueba Activa' : (userData?.hasUsedTrial || userData?.subscriptionTier === 'trial') ? 'Expirado' : 'Iniciar Prueba (1 Hora)'}</>
                 )}
               </button>
               {currentTier === 'trial' && userData?.trialEndTime && (
