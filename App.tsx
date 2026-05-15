@@ -773,9 +773,11 @@ const App: React.FC = () => {
       </div>
       )}
 
-      {/* Floating Trial Timer Bar */}
+      {/* Floating Trial Timer Bar — synced with menu visibility */}
       {subscriptionTier === 'trial' && trialTimeLeft > 0 && !showSubscription && (
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-4 px-5 py-3 rounded-2xl border border-cyan-500/40 bg-black/70 backdrop-blur-xl shadow-[0_0_30px_rgba(6,182,212,0.3)] transition-all">
+        <div className={`absolute bottom-6 left-1/2 transform -translate-x-1/2 z-40 flex items-center gap-4 px-5 py-3 rounded-2xl border border-cyan-500/40 bg-black/70 backdrop-blur-xl shadow-[0_0_30px_rgba(6,182,212,0.3)] transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]
+          ${controlsVisible ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none'}
+        `}>
           <Clock size={18} className="text-cyan-400 animate-pulse" />
           <div className="flex flex-col">
             <span className="text-xs text-cyan-300/80 font-medium">Prueba activa</span>
