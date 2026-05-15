@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { X, Check, PlayCircle, Heart, Star, Zap, Shield, Sparkles, Sprout, Glasses, LogIn, Lock } from 'lucide-react';
+import { X, Check, PlayCircle, Heart, Star, Zap, Shield, Sparkles, Sprout, Glasses, LogIn, Lock, RotateCw } from 'lucide-react';
 import { SubscriptionTier } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
 interface SubscriptionScreenProps {
   onClose: () => void;
-  onSubscribe: (tier: SubscriptionTier, trialDurationMs?: number) => void;
+  onSubscribe: (tier: SubscriptionTier, trialDurationMs?: number) => Promise<void>;
   onShowAbout: () => void;
 }
 
@@ -14,8 +14,9 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
   const currentTier = userData?.subscriptionTier || 'free';
   const [promoCode, setPromoCode] = useState('');
   const [promoError, setPromoError] = useState('');
+  const [isActivating, setIsActivating] = useState(false);
 
-  const handleTrialSubscribe = () => {
+  const handleTrialSubscribe = async () => {
     // Check if the user has already used the trial
     if (userData?.hasUsedTrial) {
       setPromoError('Ya has utilizado una prueba gratuita anteriormente.');
@@ -26,10 +27,19 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
     const normalizedCode = promoCode.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
     if (normalizedCode === 'espiral') {
       setPromoError('');
-      onSubscribe('trial', 15 * 24 * 60 * 60 * 1000); // 15 days
+      setIsActivating(true);
+      await onSubscribe('trial', 15 * 24 * 60 * 60 * 1000); // 15 days
+      // Note: Modal will close if successful
+      setIsActivating(false);
     } else {
       setPromoError('Este código no es válido.');
     }
+  };
+
+  const handleViajeroTrial = async () => {
+    setIsActivating(true);
+    await onSubscribe('trial', 1 * 60 * 60 * 1000);
+    setIsActivating(false);
   };
 
   // Format remaining trial time
@@ -141,15 +151,19 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
                 <li className="flex items-start gap-2 text-sm text-gray-300"><Check size={16} className="text-cyan-400 shrink-0 mt-0.5" /> Realidad Virtual y AR</li>
               </ul>
               <button 
-                onClick={() => onSubscribe('trial', 1 * 60 * 60 * 1000)}
-                disabled={!user || currentTier === 'trial' || currentTier === 'annual' || currentTier === 'lifetime'}
+                onClick={handleViajeroTrial}
+                disabled={!user || currentTier === 'trial' || currentTier === 'annual' || currentTier === 'lifetime' || userData?.hasUsedTrial || isActivating}
                 className={`w-full py-3 rounded-xl font-semibold transition-colors border flex items-center justify-center gap-2 ${
-                  !user || currentTier !== 'free'
+                  !user || currentTier !== 'free' || userData?.hasUsedTrial || isActivating
                     ? 'bg-gray-800/50 text-gray-500 border-gray-700 cursor-not-allowed'
                     : 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/50'
                 }`}
               >
-                <Zap size={18} /> {currentTier === 'trial' ? 'Prueba Activa' : 'Iniciar Prueba (1 Hora)'}
+                {isActivating ? (
+                  <><RotateCw size={18} className="animate-spin" /> Activando...</>
+                ) : (
+                  <><Zap size={18} /> {currentTier === 'trial' ? 'Prueba Activa' : userData?.hasUsedTrial ? 'Expirado' : 'Iniciar Prueba (1 Hora)'}</>
+                )}
               </button>
               {currentTier === 'trial' && userData?.trialEndTime && (
                 <div className="w-full mt-3 py-2.5 rounded-xl font-medium text-center text-sm bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
@@ -216,12 +230,16 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
                     )}
                     <button 
                       onClick={handleTrialSubscribe}
-                      disabled={!promoCode.trim()}
+                      disabled={!promoCode.trim() || isActivating}
                       className={`w-full py-2.5 rounded-xl font-bold transition-colors shadow-none flex items-center justify-center gap-2 text-sm
-                        ${!promoCode.trim() ? 'bg-gray-800/50 text-gray-500 border border-gray-700 cursor-not-allowed' : 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40'}
+                        ${(!promoCode.trim() || isActivating) ? 'bg-gray-800/50 text-gray-500 border border-gray-700 cursor-not-allowed' : 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40'}
                       `}
                     >
-                      Probar 15 días gratis
+                      {isActivating ? (
+                        <><RotateCw size={16} className="animate-spin" /> Aplicando...</>
+                      ) : (
+                        'Aplicar código'
+                      )}
                     </button>
                   </div>
                 </div>
