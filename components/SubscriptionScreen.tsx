@@ -1,20 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, Check, PlayCircle, Heart, Star, Zap, Shield, Sparkles, Sprout, Glasses, LogIn, Lock } from 'lucide-react';
 import { SubscriptionTier } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      'stripe-buy-button': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
-        'buy-button-id'?: string;
-        'publishable-key'?: string;
-        'client-reference-id'?: string;
-        'customer-email'?: string;
-      };
-    }
-  }
-}
 
 interface SubscriptionScreenProps {
   onClose: () => void;
@@ -23,8 +10,19 @@ interface SubscriptionScreenProps {
 }
 
 const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubscribe, onShowAbout }) => {
-  const { user, userData, setAuthModalOpen } = useAuth();
+  const { user, userData, login, createStripeCheckout } = useAuth();
   const currentTier = userData?.subscriptionTier || 'free';
+  const [promoCode, setPromoCode] = useState('');
+  const [promoError, setPromoError] = useState('');
+
+  const handleTrialSubscribe = () => {
+    if (promoCode.trim().toLowerCase() === 'espiral') {
+      setPromoError('');
+      onSubscribe('trial');
+    } else {
+      setPromoError('Código promocional inválido');
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-xl animate-in fade-in duration-500 overflow-y-auto">
@@ -48,7 +46,7 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
           </p>
           {!user && (
             <button 
-              onClick={() => setAuthModalOpen(true)}
+              onClick={login}
               className="relative z-10 inline-flex items-center gap-2 px-6 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium transition-colors"
             >
               <LogIn size={18} />
@@ -114,7 +112,7 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
               </div>
               <div className="mb-4">
                 <h3 className="text-xl font-bold text-cyan-300 mb-2">Viajero</h3>
-                <div className="text-3xl font-bold text-white mb-1">1 Hora</div>
+                <div className="text-3xl font-bold text-white mb-1">15 Días</div>
                 <p className="text-xs text-cyan-500/80">Acceso completo temporal</p>
               </div>
               <ul className="space-y-3 mb-8 flex-1">
@@ -151,28 +149,62 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
                 <li className="flex items-start gap-2 text-sm text-gray-200"><Check size={16} className="text-purple-400 shrink-0 mt-0.5" /> Realidad Virtual y AR</li>
                 <li className="flex items-start gap-2 text-sm text-gray-200"><Check size={16} className="text-purple-400 shrink-0 mt-0.5" /> Guardar presets ilimitados</li>
               </ul>
-              {(!user || currentTier === 'annual' || currentTier === 'lifetime') ? (
+              {!user ? (
                 <button 
-                  onClick={!user ? () => setAuthModalOpen(true) : undefined}
-                  disabled={!!user}
-                  className={`w-full py-3 rounded-xl font-bold transition-colors shadow-[0_0_15px_rgba(168,85,247,0.5)] flex items-center justify-center gap-2 ${
-                    !user 
-                      ? 'bg-purple-500 hover:bg-purple-600 text-white'
-                      : 'bg-gray-800/50 text-gray-500 shadow-none cursor-not-allowed'
-                  }`}
+                  onClick={() => login()}
+                  className="w-full py-3 rounded-xl font-bold transition-colors shadow-[0_0_15px_rgba(168,85,247,0.5)] flex items-center justify-center gap-2 bg-purple-500 hover:bg-purple-600 text-white"
                 >
-                  <Star size={18} /> {!user ? 'Iniciar Sesión para Suscribirse' : (currentTier === 'annual' ? 'Suscrito' : 'Plan Inferior')}
+                  Iniciar sesión para suscribirse
+                </button>
+              ) : currentTier === 'annual' || currentTier === 'lifetime' ? (
+                <button 
+                  disabled
+                  className="w-full py-3 rounded-xl font-bold transition-colors bg-gray-800/50 text-gray-500 shadow-none cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <Star size={18} /> {currentTier === 'annual' ? 'Suscrito' : 'Incluido en Maestro'}
                 </button>
               ) : (
-                <div className="flex justify-center w-full">
-                  <stripe-buy-button
-                    buy-button-id="buy_btn_1THXtjRxtUn1kHYyHQndXHxm"
-                    publishable-key="pk_live_51THUSJRxtUn1kHYyi4JOokgXWyUSLqyZwqqWXgIHU2q3xn4N4o7rPtxxe6GPjqsVPu7FOwlRPSb8nzVz0Qk1vAc400GT4711QT"
-                    client-reference-id={user.uid}
-                    customer-email={user.email || undefined}
+                <>
+                  <a 
+                    href={`https://buy.stripe.com/8x2dRbdxpa0W1F3giv6Na01?prefilled_email=${encodeURIComponent(user.email || '')}&client_reference_id=${user.uid}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3 rounded-xl font-bold transition-colors shadow-[0_0_15px_rgba(168,85,247,0.5)] flex items-center justify-center gap-2 bg-purple-500 hover:bg-purple-600 text-white"
                   >
-                  </stripe-buy-button>
+                    <Star size={18} /> Suscribirse a Creador
+                  </a>
+                </>
+              )}
+              {user && currentTier === 'free' && (
+                <div className="mt-4 pt-4 border-t border-purple-500/20">
+                  <p className="text-xs text-purple-300/80 mb-2 font-medium text-center">¿Tienes un código promocional?</p>
+                  <div className="flex flex-col gap-2">
+                    <input 
+                      type="text" 
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                      placeholder="Ingresa tu código" 
+                      className="bg-black/50 border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-center text-white focus:outline-none focus:border-purple-400"
+                    />
+                    {promoError && (
+                      <p className="text-xs text-red-400 text-center">{promoError}</p>
+                    )}
+                    <button 
+                      onClick={handleTrialSubscribe}
+                      disabled={!promoCode.trim()}
+                      className={`w-full py-2.5 rounded-xl font-bold transition-colors shadow-none flex items-center justify-center gap-2 text-sm
+                        ${!promoCode.trim() ? 'bg-gray-800/50 text-gray-500 border border-gray-700 cursor-not-allowed' : 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40'}
+                      `}
+                    >
+                      Probar 15 días gratis
+                    </button>
+                  </div>
                 </div>
+              )}
+              {currentTier === 'trial' && userData?.trialEndTime && (
+                 <div className="w-full mt-3 py-2.5 rounded-xl font-medium text-center text-sm bg-yellow-500/10 border border-yellow-500/30 text-yellow-400">
+                    Prueba expira en: {Math.max(0, Math.ceil((userData.trialEndTime - Date.now()) / (1000 * 60 * 60 * 24)))} días
+                 </div>
               )}
             </div>
 
@@ -188,31 +220,40 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
                 <li className="flex items-start gap-2 text-sm text-gray-300"><Check size={16} className="text-emerald-400 shrink-0 mt-0.5" /> Todas las actualizaciones futuras</li>
                 <li className="flex items-start gap-2 text-sm text-gray-300"><Check size={16} className="text-emerald-400 shrink-0 mt-0.5" /> Soporte prioritario</li>
               </ul>
-              {(!user || currentTier === 'lifetime') ? (
+              {!user ? (
                 <button 
-                  onClick={!user ? () => setAuthModalOpen(true) : undefined}
-                  disabled={!!user}
-                  className={`w-full py-3 rounded-xl font-semibold transition-colors border flex items-center justify-center gap-2 ${
-                    !user 
-                      ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/50'
-                      : 'bg-gray-800/50 text-gray-500 border-gray-700 cursor-not-allowed'
-                  }`}
+                  onClick={() => login()}
+                  className="w-full py-3 rounded-xl font-semibold transition-colors border flex items-center justify-center gap-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/50"
                 >
-                  <Shield size={18} /> {!user ? 'Iniciar Sesión para Obtener' : 'Desbloqueado'}
+                  Iniciar sesión para suscribirse
+                </button>
+              ) : currentTier === 'lifetime' ? (
+                <button 
+                  disabled
+                  className="w-full py-3 rounded-xl font-semibold transition-colors border flex items-center justify-center gap-2 bg-gray-800/50 text-gray-500 border-gray-700 cursor-not-allowed"
+                >
+                  <Shield size={18} /> Desbloqueado
                 </button>
               ) : (
-                <div className="flex justify-center w-full">
-                  <stripe-buy-button
-                    buy-button-id="buy_btn_1THXv8RxtUn1kHYynllQlH3N"
-                    publishable-key="pk_live_51THUSJRxtUn1kHYyi4JOokgXWyUSLqyZwqqWXgIHU2q3xn4N4o7rPtxxe6GPjqsVPu7FOwlRPSb8nzVz0Qk1vAc400GT4711QT"
-                    client-reference-id={user.uid}
-                    customer-email={user.email || undefined}
+                <>
+                  <a 
+                    href={`https://donate.stripe.com/9B6eVfdxp0qmbfD5DR6Na00?prefilled_email=${encodeURIComponent(user.email || '')}&client_reference_id=${user.uid}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3 rounded-xl font-semibold transition-colors border flex items-center justify-center gap-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/50"
                   >
-                  </stripe-buy-button>
-                </div>
+                    <Shield size={18} /> Obtener Acceso
+                  </a>
+                </>
               )}
             </div>
 
+          </div>
+
+          <div className="mt-6 text-center">
+            <p className="text-xs text-gray-400">
+              Después de realizar el pago, puede tomar unos momentos en sincronizarse. Si no ves los cambios, recarga la página.
+            </p>
           </div>
 
           {/* Feature Previews */}

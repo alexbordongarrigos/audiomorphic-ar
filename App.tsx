@@ -105,7 +105,7 @@ const calculateHarmonicGeometry = (V: number, E: number): {
 
 
 const App: React.FC = () => {
-  const { user, userData, updateSubscription, setAuthModalOpen, logout, loginWithGoogle } = useAuth();
+  const { user, userData, updateSubscription, login, setAuthModalOpen, logout, loginWithGoogle } = useAuth();
   
   // Load initial params from localStorage if available, otherwise use DEFAULT_PARAMS
   const [params, setParams] = useState<VisualizerParams>(() => {
@@ -158,10 +158,9 @@ const App: React.FC = () => {
             arPortalMode: false,
             sacredGeometryEnabled: false,
             autoPilot: true,
-            autoPilotMode: 'harmonic', // Solo a Armónico al EXPlRAR la prueba
-            lockedParams: ['vrMode', 'arMode', 'arPortalMode', 'sacredGeometryEnabled']
+            autoPilotMode: prev.autoPilotMode === 'drift' ? 'genesis' : prev.autoPilotMode
           }));
-          setShowSubscription(false);
+          setShowSubscription(true);
         }
       }, 5000); // Check faster but only once it expires it resets
       return () => clearInterval(checkTrial);

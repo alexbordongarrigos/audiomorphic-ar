@@ -8,6 +8,8 @@ import { handleFirestoreError, OperationType } from '../utils/firestoreErrors';
 
 import { usePresets, Preset } from '../hooks/usePresets';
 import ProfileMenu from './ProfileMenu';
+import LiquidSelect from './LiquidSelect';
+import LiquidSlider from './LiquidSlider';
 
 interface ControlPanelProps {
   params: VisualizerParams;
@@ -61,7 +63,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   selectedAudioDeviceId = '',
   onAudioDeviceChange
 }) => {
-  const { user, setAuthModalOpen, logout } = useAuth();
+  const { user, login, setAuthModalOpen, logout, createStripeCheckout } = useAuth();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedSgEditMode, setSelectedSgEditMode] = useState<SacredGeometryMode>('flowerOfLife');
   const [showPresetModal, setShowPresetModal] = useState(false);
@@ -1590,15 +1592,14 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           </div>
         </div>
         <div onClick={isPremiumLocked ? onShowSubscription : undefined} className={isPremiumLocked ? "cursor-pointer" : ""}>
-          <input
-            type="range"
+          <LiquidSlider
+            value={params[key] as number}
+            onChange={handleManualChange}
             min={min}
             max={max}
             step={step}
-            value={params[key] as number}
-            onChange={(e) => handleManualChange(parseFloat(e.target.value))}
-            className={`liquid-slider ${isParamLocked ? 'locked' : ''} ${isPremiumLocked ? 'pointer-events-none' : ''}`}
-            readOnly={isPremiumLocked}
+            className={isParamLocked ? 'locked' : ''}
+            disabled={isPremiumLocked}
           />
         </div>
       </div>
@@ -1652,18 +1653,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           />
         </div>
         <div onClick={isPremiumLocked ? onShowSubscription : undefined} className={isPremiumLocked ? "cursor-pointer" : ""}>
-          <input
-            type="range"
-            min={min}
-            max={max}
-            step={step}
-            value={value as number}
-            onChange={(e) => {
+          <LiquidSlider
+            value={value}
+            onChange={(val) => {
               if (isPremiumLocked) {
                 onShowSubscription();
                 return;
               }
-              const val = parseFloat(e.target.value);
               setParams(prev => ({
                 ...prev,
                 sgSettings: {
@@ -1675,8 +1671,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 }
               }));
             }}
-            className={`liquid-slider liquid-slider-emerald ${isPremiumLocked ? 'pointer-events-none' : ''}`}
-            readOnly={isPremiumLocked}
+            min={min}
+            max={max}
+            step={step}
+            className="liquid-slider-emerald"
+            disabled={isPremiumLocked}
           />
         </div>
       </div>
@@ -2091,17 +2090,16 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               </div>
               
               {params.audioSource === 'microphone' && audioDevices.length > 0 && (
-                <select
-                  value={selectedAudioDeviceId}
-                  onChange={(e) => onAudioDeviceChange?.(e.target.value)}
-                  className="bg-black/60 border border-white/20 rounded-full px-3 py-1.5 text-[10px] text-cyan-300 outline-none max-w-[120px] truncate"
-                >
-                  {audioDevices.map((device) => (
-                    <option key={device.deviceId} value={device.deviceId} className="bg-gray-900">
-                      {device.label || `Entrada ${device.deviceId.slice(0, 5)}`}
-                    </option>
-                  ))}
-                </select>
+                <div className="max-w-[150px]">
+                  <LiquidSelect
+                    value={selectedAudioDeviceId}
+                    onChange={(val) => onAudioDeviceChange?.(val)}
+                    options={audioDevices.map(device => ({
+                      value: device.deviceId,
+                      label: device.label || `Entrada ${device.deviceId.slice(0, 5)}`
+                    }))}
+                  />
+                </div>
               )}
             </div>
             <button
@@ -2156,27 +2154,26 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                  <div className="flex items-center gap-2 mb-4">
                    <div className="flex-1 bg-black/40 border border-white/10 rounded-xl p-1 flex items-center">
                      <BrainCircuit className="w-4 h-4 text-purple-400 ml-2 mr-1" />
-                     <select
-                       value={params.autoRandomMode}
-                       onChange={(e) => {
-                         const val = e.target.value;
-                         if (isLocked && val !== 'none' && val !== 'random') {
-                           onShowSubscription();
-                           return;
-                         }
-                         handleAutoRandomModeChange(val as any);
-                       }}
-                       className="liquid-select-native"
-                     >
-                       <option value="none">Apagado</option>
-                       <option value="random">Aleatorio Total</option>
-                       <option value="smart">Modo Inteligente {isLocked ? ' (🔒 PRO)' : ''}</option>
-                       <option value="dj">Modo DJ {isLocked ? ' (🔒 PRO)' : ''}</option>
-                       <option value="sacred">Resonancias Sagradas {isLocked ? ' (🔒 PRO)' : ''}</option>
-                       <option value="rhythmic">Ritmos Musicales {isLocked ? ' (🔒 PRO)' : ''}</option>
-                       <option value="rainbow">Sinfonía Arcoíris {isLocked ? ' (🔒 PRO)' : ''}</option>
-                       <option value="astral">Astromorphociberpsicodélico {isLocked ? ' (🔒 PRO)' : ''}</option>
-                     </select>
+                     <LiquidSelect
+                        value={params.autoRandomMode}
+                        onChange={(val) => {
+                          if (isLocked && val !== 'none' && val !== 'random') {
+                            onShowSubscription();
+                            return;
+                          }
+                          handleAutoRandomModeChange(val as any);
+                        }}
+                        options={[
+                          { value: 'none', label: 'Apagado' },
+                          { value: 'random', label: 'Aleatorio Total' },
+                          { value: 'smart', label: 'Modo Inteligente' },
+                          { value: 'dj', label: 'Modo DJ' },
+                          { value: 'sacred', label: 'Resonancias Sagradas' },
+                          { value: 'rhythmic', label: 'Ritmos Musicales' },
+                          { value: 'rainbow', label: 'Sinfonía Arcoíris' },
+                          { value: 'astral', label: 'Astromorphociberpsicodélico' }
+                        ]}
+                      />
                    </div>
                    <button
                      onClick={() => {
@@ -2420,15 +2417,15 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
                              <div className="bg-black/30 p-2 rounded-lg border border-white/5 space-y-1.5">
                                <label className="text-[10px] text-gray-300 font-semibold">Retardo de Tiempo</label>
-                               <select 
-                                 value={params.autoTimeDelayMode}
-                                 onChange={(e) => handleChange('autoTimeDelayMode', e.target.value as any)}
-                                 className="liquid-select-native"
-                               >
-                                 <option value="instant">Instantáneo</option>
-                                 <option value="smart">Automático Inteligente</option>
-                                 <option value="custom">Personalizable</option>
-                               </select>
+                               <LiquidSelect
+                                  value={params.autoTimeDelayMode || 'smart'}
+                                  onChange={(val) => handleChange('autoTimeDelayMode', val)}
+                                  options={[
+                                    { value: 'instant', label: 'Instantáneo' },
+                                    { value: 'smart', label: 'Automático Inteligente' },
+                                    { value: 'custom', label: 'Personalizable' }
+                                  ]}
+                                />
                                {params.autoTimeDelayMode === 'custom' && (
                                  <div className="pt-1">
                                    {renderControl("Segundos", "autoTimeDelay", 0, 10, 0.1)}
@@ -2438,15 +2435,15 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
                              <div className="bg-black/30 p-2 rounded-lg border border-white/5 space-y-1.5">
                                <label className="text-[10px] text-gray-300 font-semibold">Regeneración de Parámetros</label>
-                               <select 
-                                 value={params.autoParamRegenMode}
-                                 onChange={(e) => handleChange('autoParamRegenMode', e.target.value as any)}
-                                 className="liquid-select-native"
-                               >
-                                 <option value="instant">Instantáneo</option>
-                                 <option value="smooth">Suave (Líquido)</option>
-                                 <option value="custom">Retardo Personalizable</option>
-                               </select>
+                               <LiquidSelect
+                                  value={params.autoParamRegenMode || 'custom'}
+                                  onChange={(val) => handleChange('autoParamRegenMode', val)}
+                                  options={[
+                                    { value: 'instant', label: 'Instantáneo' },
+                                    { value: 'smooth', label: 'Suave (Líquido)' },
+                                    { value: 'custom', label: 'Retardo Personalizable' }
+                                  ]}
+                                />
                                {params.autoParamRegenMode === 'custom' && (
                                  <div className="pt-1 space-y-1">
                                    {renderControl("Retardo (s)", "autoParamRegenDelay", 0, 10, 0.1)}
@@ -2549,7 +2546,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                           }}
                           className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs uppercase font-bold rounded-xl transition-all ${
                             params.autoPilotMode === 'genesis' 
-                              ? 'liquid-bubble text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
+                              ? 'liquid-bubble text-emerald-300 shadow-[0_0_20px_rgba(10,185,129,0.3)]' 
                               : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
                           }`}
                         >
@@ -3076,26 +3073,25 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                       <label className="text-xs uppercase tracking-wider text-gray-300 flex items-center gap-2 mb-3 font-semibold">
                         Filtro AR {isLocked && <Lock size={12} className="text-amber-400" />}
                       </label>
-                      <select 
+                      <LiquidSelect
                         value={params.arFilter}
-                        onChange={(e) => {
+                        onChange={(val) => {
                           if (isLocked) {
                             onShowSubscription();
                             return;
                           }
-                          handleChange('arFilter', e.target.value);
+                          handleChange('arFilter', val);
                         }}
-                        className={`liquid-select-native ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}
-                        disabled={isLocked}
-                      >
-                        <option value="none">Ninguno</option>
-                        <option value="psychedelic">Psicodélico</option>
-                        <option value="noir">Noir (Blanco y Negro)</option>
-                        <option value="neon">Neón</option>
-                        <option value="glitch">Glitch</option>
-                        <option value="dream">Sueño</option>
-                        <option value="hypnotic">Hipnótico</option>
-                      </select>
+                        options={[
+                          { value: "none", label: "Ninguno" },
+                          { value: "psychedelic", label: "Psicodélico" },
+                          { value: "noir", label: "Noir (B&N)" },
+                          { value: "neon", label: "Neón" },
+                          { value: "glitch", label: "Glitch" },
+                          { value: "dream", label: "Sueño" },
+                          { value: "hypnotic", label: "Hipnótico" }
+                        ]}
+                      />
                       <div className="mt-5">
                         {renderControl("Intensidad Filtro", "arIntensity", 0.0, 1.0, 0.05, undefined, false, true)}
                       </div>
@@ -3272,25 +3268,18 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 <label className="text-xs uppercase tracking-wider text-gray-300 flex items-center gap-2 mb-3 font-semibold">
                   Modo de Fondo
                 </label>
-                <select 
-                  value={params.bgMode}
-                  onChange={(e) => {
-                    if (isLocked) {
-                      onShowSubscription();
-                      return;
-                    }
-                    handleChange('bgMode', e.target.value);
-                  }}
-                  className="liquid-select-native"
-                  disabled={isLocked}
-                >
-                  <option value="solid">Color Sólido</option>
-                  <option value="gradient">Degradado</option>
-                  <option value="liquid-rainbow">Arcoíris Líquido</option>
-                  <option value="crystal-bubbles">Burbujas de Cristal</option>
-                  <option value="organic-fade">Transición Orgánica</option>
-                  <option value="morphing-colors">Colores Mórficos</option>
-                </select>
+                <LiquidSelect
+                  value={params.bgMode || 'solid'}
+                  onChange={(val) => handleChange('bgMode', val)}
+                  options={[
+                    { value: 'solid', label: 'Color Sólido' },
+                    { value: 'gradient', label: 'Degradado' },
+                    { value: 'liquid-rainbow', label: 'Arcoíris Líquido' },
+                    { value: 'crystal-bubbles', label: 'Burbujas de Cristal' },
+                    { value: 'organic-fade', label: 'Transición Orgánica' },
+                    { value: 'morphing-colors', label: 'Colores Mórficos' }
+                  ]}
+                />
               </div>
 
               <div className={`mb-4 bg-black/20 p-4 rounded-2xl border border-white/5 ${isLocked ? 'opacity-50 cursor-pointer' : ''}`} onClick={() => { if (isLocked) onShowSubscription(); }}>

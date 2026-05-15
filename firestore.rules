@@ -82,9 +82,10 @@ service cloud.firestore {
     }
 
     function isValidPreset(data) {
-      let allowedFields = ['userId', 'name', 'params', 'createdAt'];
+      let allowedFields = ['uid', 'userId', 'name', 'params', 'createdAt'];
       return hasOnlyAllowedFields(allowedFields) &&
              hasRequiredFields(allowedFields) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 128 &&
              data.userId is string && data.userId.size() > 0 && data.userId.size() < 128 &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              data.params is string && data.params.size() > 0 && data.params.size() < 500000 && // Max 500KB string
@@ -109,14 +110,41 @@ service cloud.firestore {
                          (request.auth.token.email != "alexbordongarrigos@gmail.com" && request.resource.data.subscriptionTier == 'free')
                        );
                        
-      // Users can update their own profile, permitting client-side subscription modifications (since this is currently the only flow)
+      // Users can update their own profile, but cannot change their subscription tier (unless admin)
       allow update: if isOwner(userId) && 
                        isValidUser(request.resource.data) && 
                        uidNotModified() &&
-                       request.resource.data.createdAt == resource.data.createdAt;
+                       request.resource.data.createdAt == resource.data.createdAt &&
+                       (
+                         request.resource.data.subscriptionTier == resource.data.subscriptionTier ||
+                         (request.auth.token.email == "alexbordongarrigos@gmail.com" && request.resource.data.subscriptionTier == 'lifetime')
+                       );
                        
       // Users cannot delete their profile directly
       allow delete: if false;
+
+      // Stripe Extension Data
+      match /checkout_sessions/{id} {
+        allow read, write: if isOwner(userId);
+      }
+      match /subscriptions/{id} {
+        allow read: if isOwner(userId);
+      }
+      match /payments/{id} {
+        allow read: if isOwner(userId);
+      }
+    }
+
+    match /products/{id} {
+      allow read: if true;
+
+      match /prices/{priceId} {
+        allow read: if true;
+      }
+
+      match /tax_rates/{taxRateId} {
+        allow read: if true;
+      }
     }
 
     match /presets/{presetId} {
@@ -133,6 +161,7 @@ service cloud.firestore {
                        resource.data.userId == request.auth.uid &&
                        isValidPreset(request.resource.data) &&
                        request.resource.data.userId == resource.data.userId &&
+                       request.resource.data.uid == resource.data.uid &&
                        request.resource.data.createdAt == resource.data.createdAt;
                        
       // Users can delete their own presets
