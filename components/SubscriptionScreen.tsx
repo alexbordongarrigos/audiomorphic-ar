@@ -31,8 +31,8 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
       setIsActivating(true);
       try {
         await onSubscribe('trial', 15 * 24 * 60 * 60 * 1000); // 15 days
-      } catch (error) {
-        setPromoError('Ha ocurrido un error al activar la prueba.');
+      } catch (error: any) {
+        setPromoError(`Error: ${error.message || String(error)}`);
       } finally {
         setIsActivating(false);
       }
