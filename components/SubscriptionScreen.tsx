@@ -16,6 +16,12 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
   const [promoError, setPromoError] = useState('');
 
   const handleTrialSubscribe = () => {
+    // Check if the user has already used the trial
+    if (userData?.hasUsedTrial) {
+      setPromoError('Ya has utilizado una prueba gratuita anteriormente.');
+      return;
+    }
+
     // Normalize string: remove any quotes, spaces, or special characters and convert to lowercase
     const normalizedCode = promoCode.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
     if (normalizedCode === 'espiral') {

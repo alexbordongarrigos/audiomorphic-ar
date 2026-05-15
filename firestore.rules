@@ -68,17 +68,16 @@ service cloud.firestore {
 
     // Domain Validators
     function isValidUser(data) {
-      let allowedFields = ['uid', 'email', 'subscriptionTier', 'trialEndTime', 'createdAt', 'updatedAt'];
       let validTiers = ['free', 'trial', 'annual', 'lifetime'];
       
-      return hasOnlyAllowedFields(allowedFields) &&
-             hasRequiredFields(['uid', 'email', 'subscriptionTier', 'createdAt', 'updatedAt']) &&
+      return hasRequiredFields(['uid', 'email', 'subscriptionTier', 'createdAt', 'updatedAt']) &&
              data.uid is string && data.uid.size() > 0 && data.uid.size() < 128 &&
              isValidEmail(data.email) &&
              data.subscriptionTier in validTiers &&
              data.createdAt is number &&
              data.updatedAt is number &&
-             (!('trialEndTime' in data) || data.trialEndTime is number);
+             (!('trialEndTime' in data) || data.trialEndTime is number) &&
+             (!('hasUsedTrial' in data) || data.hasUsedTrial is bool);
     }
 
     function isValidPreset(data) {
@@ -120,8 +119,12 @@ service cloud.firestore {
                          request.resource.data.subscriptionTier == resource.data.subscriptionTier ||
                          // Admin can set lifetime
                          (request.auth.token.email == "alexbordongarrigos@gmail.com" && request.resource.data.subscriptionTier == 'lifetime') ||
-                         // User activates trial (free → trial, must include trialEndTime)
-                         (resource.data.subscriptionTier == 'free' && request.resource.data.subscriptionTier == 'trial' && 'trialEndTime' in request.resource.data && request.resource.data.trialEndTime is number) ||
+                         // User activates trial (free → trial, must include trialEndTime and hasUsedTrial: true, and must not have used trial before)
+                         (resource.data.subscriptionTier == 'free' && 
+                          request.resource.data.subscriptionTier == 'trial' && 
+                          'trialEndTime' in request.resource.data && request.resource.data.trialEndTime is number &&
+                          request.resource.data.hasUsedTrial == true && 
+                          (!('hasUsedTrial' in resource.data) || resource.data.hasUsedTrial != true)) ||
                          // User trial expires (trial → free)
                          (resource.data.subscriptionTier == 'trial' && request.resource.data.subscriptionTier == 'free')
                        );

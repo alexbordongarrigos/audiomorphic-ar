@@ -32,6 +32,7 @@ interface UserData {
   email: string;
   subscriptionTier: SubscriptionTier;
   trialEndTime?: number;
+  hasUsedTrial?: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -286,6 +287,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Default: 1 hour for Viajero. Promo code passes 15 days.
       const duration = trialDurationMs || (1 * 60 * 60 * 1000); // 1 hour default
       updates.trialEndTime = now + duration;
+      updates.hasUsedTrial = true;
     } else {
       updates.trialEndTime = undefined;
     }
