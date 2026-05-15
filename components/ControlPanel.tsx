@@ -1180,23 +1180,57 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     };
   }, []);
 
-  const toggleFullScreen = () => {
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const doc = document as any;
+      setIsFullscreen(!!(doc.fullscreenElement || doc.webkitFullscreenElement));
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  const toggleFullScreen = async () => {
+    const electronAPI = (window as any).electronAPI;
+    if (electronAPI && electronAPI.toggleFullscreen) {
+      electronAPI.toggleFullscreen();
+      setIsFullscreen(!isFullscreen);
+      return;
+    }
+
     const doc = document as any;
     const docEl = document.documentElement as any;
+    const Capacitor = (window as any).Capacitor;
 
     if (!doc.fullscreenElement && !doc.webkitFullscreenElement) {
       if (docEl.requestFullscreen) {
-        docEl.requestFullscreen().catch((err: any) => console.error(err));
+        await docEl.requestFullscreen().catch((err: any) => console.error(err));
       } else if (docEl.webkitRequestFullscreen) {
         docEl.webkitRequestFullscreen();
-      } else {
-        alert("Tu navegador no soporta pantalla completa.");
+      } else if (Capacitor && Capacitor.isNative) {
+        // Fallback for Capacitor/Android if web APIs fail
+        const StatusBar = Capacitor.Plugins?.StatusBar;
+        if (StatusBar) {
+           await StatusBar.hide().catch(() => {});
+        }
+        setIsFullscreen(true);
       }
     } else {
       if (doc.exitFullscreen) {
         doc.exitFullscreen();
       } else if (doc.webkitExitFullscreen) {
         doc.webkitExitFullscreen();
+      } else if (Capacitor && Capacitor.isNative) {
+        const StatusBar = Capacitor.Plugins?.StatusBar;
+        if (StatusBar) {
+           await StatusBar.show().catch(() => {});
+        }
+        setIsFullscreen(false);
       }
     }
   };
@@ -2117,6 +2151,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               title="Pantalla Completa"
             >
               {isFullscreen ? <Minimize className="w-5 h-5 icon-neon" /> : <Maximize className="w-5 h-5 icon-neon" />}
+              <span className="hidden sm:inline">Pantalla Completa</span>
             </button>
             <button
               onClick={handleInstallClick}
@@ -2124,6 +2159,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               title="Instalar"
             >
               <Download className="w-5 h-5 icon-neon" />
+              <span className="hidden sm:inline">Descargar App</span>
             </button>
             
             {onClose && (
@@ -2166,12 +2202,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                         options={[
                           { value: 'none', label: 'Apagado' },
                           { value: 'random', label: 'Aleatorio Total' },
-                          { value: 'smart', label: 'Modo Inteligente' },
-                          { value: 'dj', label: 'Modo DJ' },
-                          { value: 'sacred', label: 'Resonancias Sagradas' },
-                          { value: 'rhythmic', label: 'Ritmos Musicales' },
-                          { value: 'rainbow', label: 'Sinfonía Arcoíris' },
-                          { value: 'astral', label: 'Astromorphociberpsicodélico' }
+                          { value: 'smart', label: 'Modo Inteligente', locked: isLocked },
+                          { value: 'dj', label: 'Modo DJ', locked: isLocked },
+                          { value: 'sacred', label: 'Resonancias Sagradas', locked: isLocked },
+                          { value: 'rhythmic', label: 'Ritmos Musicales', locked: isLocked },
+                          { value: 'rainbow', label: 'Sinfonía Arcoíris', locked: isLocked },
+                          { value: 'astral', label: 'Astromorphociberpsicodélico', locked: isLocked }
                         ]}
                       />
                    </div>
@@ -3084,12 +3120,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                         }}
                         options={[
                           { value: "none", label: "Ninguno" },
-                          { value: "psychedelic", label: "Psicodélico" },
-                          { value: "noir", label: "Noir (B&N)" },
-                          { value: "neon", label: "Neón" },
-                          { value: "glitch", label: "Glitch" },
-                          { value: "dream", label: "Sueño" },
-                          { value: "hypnotic", label: "Hipnótico" }
+                          { value: "psychedelic", label: "Psicodélico", locked: isLocked },
+                          { value: "noir", label: "Noir (B&N)", locked: isLocked },
+                          { value: "neon", label: "Neón", locked: isLocked },
+                          { value: "glitch", label: "Glitch", locked: isLocked },
+                          { value: "dream", label: "Sueño", locked: isLocked },
+                          { value: "hypnotic", label: "Hipnótico", locked: isLocked }
                         ]}
                       />
                       <div className="mt-5">
@@ -3274,10 +3310,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   options={[
                     { value: 'solid', label: 'Color Sólido' },
                     { value: 'gradient', label: 'Degradado' },
-                    { value: 'liquid-rainbow', label: 'Arcoíris Líquido' },
-                    { value: 'crystal-bubbles', label: 'Burbujas de Cristal' },
-                    { value: 'organic-fade', label: 'Transición Orgánica' },
-                    { value: 'morphing-colors', label: 'Colores Mórficos' }
+                    { value: 'liquid-rainbow', label: 'Arcoíris Líquido', locked: isLocked },
+                    { value: 'crystal-bubbles', label: 'Burbujas de Cristal', locked: isLocked },
+                    { value: 'organic-fade', label: 'Transición Orgánica', locked: isLocked },
+                    { value: 'morphing-colors', label: 'Colores Mórficos', locked: isLocked }
                   ]}
                 />
               </div>

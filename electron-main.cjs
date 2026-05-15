@@ -144,13 +144,18 @@ async function createWindow() {
   });
 
   // Handle media access status check
-  ipcMain.handle('get-media-access-status', (event, mediaType) => {
-    if (process.platform !== 'darwin') return 'granted';
-    try {
-      return systemPreferences.getMediaAccessStatus(mediaType);
-    } catch (err) {
-      console.error(`Error checking access status for ${mediaType}:`, err);
-      return 'not-determined';
+  ipcMain.handle('get-media-access-status', async (event, mediaType) => {
+    if (process.platform === 'darwin') {
+      const status = systemPreferences.getMediaAccessStatus(mediaType);
+      return status === 'granted';
+    }
+    return true; // Not macOS
+  });
+
+  ipcMain.on('toggle-fullscreen', () => {
+    if (mainWindow) {
+      const isFullScreen = mainWindow.isFullScreen();
+      mainWindow.setFullScreen(!isFullScreen);
     }
   });
 
