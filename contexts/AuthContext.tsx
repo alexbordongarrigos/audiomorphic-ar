@@ -45,7 +45,7 @@ interface AuthContextType {
   login: () => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
-  updateSubscription: (tier: SubscriptionTier) => Promise<void>;
+  updateSubscription: (tier: SubscriptionTier, trialDurationMs?: number) => Promise<void>;
   createStripeCheckout: (priceId: string, mode: 'subscription' | 'payment') => Promise<void>;
 }
 
@@ -272,17 +272,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateSubscription = async (tier: SubscriptionTier) => {
+  const updateSubscription = async (tier: SubscriptionTier, trialDurationMs?: number) => {
     if (!user) return;
     
     const userRef = doc(db, 'users', user.uid);
+    const now = Date.now();
     const updates: Partial<UserData> = {
       subscriptionTier: tier,
-      updatedAt: Date.now(),
+      updatedAt: now,
     };
 
     if (tier === 'trial') {
-      updates.trialEndTime = Date.now() + 15 * 24 * 60 * 60 * 1000; // 15 days free trial
+      // Default: 1 hour for Viajero. Promo code passes 15 days.
+      const duration = trialDurationMs || (1 * 60 * 60 * 1000); // 1 hour default
+      updates.trialEndTime = now + duration;
     } else {
       updates.trialEndTime = undefined;
     }

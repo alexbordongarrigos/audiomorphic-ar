@@ -110,14 +110,20 @@ service cloud.firestore {
                          (request.auth.token.email != "alexbordongarrigos@gmail.com" && request.resource.data.subscriptionTier == 'free')
                        );
                        
-      // Users can update their own profile, but cannot change their subscription tier (unless admin)
+      // Users can update their own profile. Tier changes allowed: free→trial (with trialEndTime), trial→free (expiry), admin→lifetime
       allow update: if isOwner(userId) && 
                        isValidUser(request.resource.data) && 
                        uidNotModified() &&
                        request.resource.data.createdAt == resource.data.createdAt &&
                        (
+                         // No tier change
                          request.resource.data.subscriptionTier == resource.data.subscriptionTier ||
-                         (request.auth.token.email == "alexbordongarrigos@gmail.com" && request.resource.data.subscriptionTier == 'lifetime')
+                         // Admin can set lifetime
+                         (request.auth.token.email == "alexbordongarrigos@gmail.com" && request.resource.data.subscriptionTier == 'lifetime') ||
+                         // User activates trial (free → trial, must include trialEndTime)
+                         (resource.data.subscriptionTier == 'free' && request.resource.data.subscriptionTier == 'trial' && 'trialEndTime' in request.resource.data && request.resource.data.trialEndTime is number) ||
+                         // User trial expires (trial → free)
+                         (resource.data.subscriptionTier == 'trial' && request.resource.data.subscriptionTier == 'free')
                        );
                        
       // Users cannot delete their profile directly

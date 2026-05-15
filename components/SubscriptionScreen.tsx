@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface SubscriptionScreenProps {
   onClose: () => void;
-  onSubscribe: (tier: SubscriptionTier) => void;
+  onSubscribe: (tier: SubscriptionTier, trialDurationMs?: number) => void;
   onShowAbout: () => void;
 }
 
@@ -18,10 +18,22 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
   const handleTrialSubscribe = () => {
     if (promoCode.trim().toLowerCase() === 'espiral') {
       setPromoError('');
-      onSubscribe('trial');
+      onSubscribe('trial', 15 * 24 * 60 * 60 * 1000); // 15 days
     } else {
       setPromoError('Código promocional inválido');
     }
+  };
+
+  // Format remaining trial time
+  const formatTrialRemaining = () => {
+    if (!userData?.trialEndTime) return '';
+    const remaining = Math.max(0, userData.trialEndTime - Date.now());
+    const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
   };
 
   return (
@@ -112,7 +124,7 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
               </div>
               <div className="mb-4">
                 <h3 className="text-xl font-bold text-cyan-300 mb-2">Viajero</h3>
-                <div className="text-3xl font-bold text-white mb-1">15 Días</div>
+                <div className="text-3xl font-bold text-white mb-1">1 Hora</div>
                 <p className="text-xs text-cyan-500/80">Acceso completo temporal</p>
               </div>
               <ul className="space-y-3 mb-8 flex-1">
@@ -121,7 +133,7 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
                 <li className="flex items-start gap-2 text-sm text-gray-300"><Check size={16} className="text-cyan-400 shrink-0 mt-0.5" /> Realidad Virtual y AR</li>
               </ul>
               <button 
-                onClick={() => onSubscribe('trial')}
+                onClick={() => onSubscribe('trial', 1 * 60 * 60 * 1000)}
                 disabled={!user || currentTier === 'trial' || currentTier === 'annual' || currentTier === 'lifetime'}
                 className={`w-full py-3 rounded-xl font-semibold transition-colors border flex items-center justify-center gap-2 ${
                   !user || currentTier !== 'free'
@@ -129,8 +141,13 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
                     : 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/50'
                 }`}
               >
-                <Zap size={18} /> {currentTier === 'trial' ? 'Prueba Activa' : 'Iniciar Prueba'}
+                <Zap size={18} /> {currentTier === 'trial' ? 'Prueba Activa' : 'Iniciar Prueba (1 Hora)'}
               </button>
+              {currentTier === 'trial' && userData?.trialEndTime && (
+                <div className="w-full mt-3 py-2.5 rounded-xl font-medium text-center text-sm bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                  ⏱ Tiempo restante: {formatTrialRemaining()}
+                </div>
+              )}
             </div>
 
             {/* Annual Tier */}
@@ -203,7 +220,7 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({ onClose, onSubs
               )}
               {currentTier === 'trial' && userData?.trialEndTime && (
                  <div className="w-full mt-3 py-2.5 rounded-xl font-medium text-center text-sm bg-yellow-500/10 border border-yellow-500/30 text-yellow-400">
-                    Prueba expira en: {Math.max(0, Math.ceil((userData.trialEndTime - Date.now()) / (1000 * 60 * 60 * 24)))} días
+                    ⏱ Prueba expira en: {formatTrialRemaining()}
                  </div>
               )}
             </div>

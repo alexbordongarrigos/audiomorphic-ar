@@ -10,7 +10,7 @@ import { VisualizerParams, DEFAULT_PARAMS, GeometryInfo, GeometryRegime, SacredG
 import { useAudioAnalyzer } from './hooks/useAudioAnalyzer';
 import { useAuth } from './contexts/AuthContext';
 import ProfileMenu from './components/ProfileMenu';
-import { Zap, Activity, RotateCw } from 'lucide-react';
+import { Zap, Activity, RotateCw, Star, Clock } from 'lucide-react';
 
 // --- TREATISE DATA: GENESIS & MUSIC ---
 const GENESIS_STAGES = [
@@ -138,6 +138,29 @@ const App: React.FC = () => {
   const trialEndTime = userData?.trialEndTime || null;
   const subscriptionTier: SubscriptionTier = (rawTier === 'trial' && trialEndTime && Date.now() > trialEndTime) ? 'free' : rawTier;
 
+  // Real-time trial countdown (ticks every second)
+  const [trialTimeLeft, setTrialTimeLeft] = useState<number>(0);
+  useEffect(() => {
+    if (subscriptionTier === 'trial' && trialEndTime) {
+      const tick = () => setTrialTimeLeft(Math.max(0, trialEndTime - Date.now()));
+      tick(); // initial
+      const interval = setInterval(tick, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setTrialTimeLeft(0);
+    }
+  }, [subscriptionTier, trialEndTime]);
+
+  const formatTrialTime = (ms: number) => {
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+    if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+    if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+    return `${minutes}m ${seconds}s`;
+  };
+
   // Sync params to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('audiomorphic_params', JSON.stringify(params));
@@ -167,13 +190,12 @@ const App: React.FC = () => {
     }
   }, [subscriptionTier, trialEndTime, updateSubscription]);
 
-  const handleSubscribe = async (tier: SubscriptionTier) => {
+  const handleSubscribe = async (tier: SubscriptionTier, trialDurationMs?: number) => {
     if (!user) {
       setAuthModalOpen(true);
-      // After login, they can subscribe again
       return;
     }
-    await updateSubscription(tier);
+    await updateSubscription(tier, trialDurationMs);
     setShowSubscription(false);
   };
   const { 
@@ -749,6 +771,25 @@ const App: React.FC = () => {
              </div>
            )}
       </div>
+      )}
+
+      {/* Floating Trial Timer Bar */}
+      {subscriptionTier === 'trial' && trialTimeLeft > 0 && !showSubscription && (
+        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-4 px-5 py-3 rounded-2xl border border-cyan-500/40 bg-black/70 backdrop-blur-xl shadow-[0_0_30px_rgba(6,182,212,0.3)] transition-all">
+          <Clock size={18} className="text-cyan-400 animate-pulse" />
+          <div className="flex flex-col">
+            <span className="text-xs text-cyan-300/80 font-medium">Prueba activa</span>
+            <span className="text-sm font-bold text-white font-mono tracking-wider">{formatTrialTime(trialTimeLeft)}</span>
+          </div>
+          <div className="w-px h-8 bg-white/10"></div>
+          <button
+            onClick={() => setShowSubscription(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-cyan-500 text-white text-xs font-bold hover:from-purple-600 hover:to-cyan-600 transition-all shadow-[0_0_15px_rgba(168,85,247,0.4)]"
+          >
+            <Star size={14} />
+            Obtener Versión Completa
+          </button>
+        </div>
       )}
       {/* Persistent Profile Menu Removed - Now exclusively inside ControlPanel */}
 
